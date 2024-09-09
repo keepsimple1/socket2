@@ -70,7 +70,7 @@ use std::{io, slice};
 use libc::ssize_t;
 use libc::{in6_addr, in_addr};
 
-use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MsgHdr, MsgHdrMut, RecvFlags};
 
@@ -244,6 +244,9 @@ pub(crate) use libc::{
     )
 ))]
 pub(crate) use libc::{TCP_KEEPCNT, TCP_KEEPINTVL};
+
+#[cfg(any(target_os = "macos", target_os = "linux",))]
+pub(crate) use libc::{IPV6_RECVPKTINFO, IP_PKTINFO};
 
 // See this type in the Windows file.
 pub(crate) type Bool = c_int;
@@ -712,6 +715,9 @@ pub(crate) fn unix_sockaddr(path: &Path) -> io::Result<SockAddr> {
 pub(crate) use libc::msghdr;
 
 #[cfg(not(target_os = "redox"))]
+pub(crate) use libc::cmsghdr;
+
+#[cfg(not(target_os = "redox"))]
 pub(crate) fn set_msghdr_name(msg: &mut msghdr, name: &SockAddr) {
     msg.msg_name = name.as_ptr() as *mut _;
     msg.msg_namelen = name.len();
@@ -1106,6 +1112,11 @@ pub(crate) fn recvmsg(
     msg: &mut MsgHdrMut<'_, '_, '_>,
     flags: c_int,
 ) -> io::Result<usize> {
+    syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
+}
+
+#[cfg(not(target_os = "redox"))]
+pub(crate) fn recvmsg_init(fd: Socket, msg: &mut MsgHdrInit, flags: c_int) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 

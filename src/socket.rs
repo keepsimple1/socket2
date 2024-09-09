@@ -23,7 +23,7 @@ use std::time::Duration;
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
-use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
@@ -543,6 +543,16 @@ impl Socket {
         sys::recv_from(self.as_raw(), buf, flags)
     }
 
+    /// Receives data from the socket with `buf` that is fully initialized.
+    /// On success, returns the number of bytes read and the address from where the data came.
+    pub fn recv_from_init(&self, buf: &mut [u8]) -> io::Result<(usize, SockAddr)> {
+        // Safety: the `recv_from` implementation promises not to write uninitialised
+        // bytes to the buffer, so this casting is safe.
+        let buf_uninit = unsafe { &mut *(buf as *mut [u8] as *mut [MaybeUninit<u8>]) };
+
+        sys::recv_from(self.as_raw(), buf_uninit, 0)
+    }
+
     /// Receives data from the socket. Returns the amount of bytes read, the
     /// [`RecvFlags`] and the remote address from the data is coming. Unlike
     /// [`recv_from`] this allows passing multiple buffers.
@@ -640,6 +650,13 @@ impl Socket {
     #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
     pub fn recvmsg(&self, msg: &mut MsgHdrMut<'_, '_, '_>, flags: sys::c_int) -> io::Result<usize> {
         sys::recvmsg(self.as_raw(), msg, flags)
+    }
+
+    /// Receive a message from a socket using a message structure that is fully initialized.
+    #[cfg(all(unix, not(target_os = "redox")))]
+    #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
+    pub fn recvmsg_init(&self, msg: &mut MsgHdrInit, flags: sys::c_int) -> io::Result<usize> {
+        sys::recvmsg_init(self.as_raw(), msg, flags)
     }
 
     /// Sends data on the socket to a connected peer.
@@ -1642,6 +1659,16 @@ impl Socket {
             getsockopt::<c_int>(self.as_raw(), sys::IPPROTO_IP, sys::IP_RECVTOS)
                 .map(|recv_tos| recv_tos > 0)
         }
+    }
+
+    /// Set PKTINFO for this socket.
+    pub fn set_pktinfo_v4(&self) -> io::Result<()> {
+        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, 1) }
+    }
+
+    /// Set PKTINFO for this socket.
+    pub fn set_recv_pktinfo_v6(&self) -> io::Result<()> {
+        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IPV6, sys::IPV6_RECVPKTINFO, 1) }
     }
 }
 
