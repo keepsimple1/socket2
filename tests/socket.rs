@@ -49,7 +49,9 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
-use socket2::{CMsgType, MsgHdrInit};
+use socket2::MsgHdrInit;
+use socket2::CMSG_TYPE_IPV6_PKTINFO;
+use socket2::CMSG_TYPE_IP_PKTINFO;
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{GetHandleInformation, HANDLE_FLAG_INHERIT};
 
@@ -801,7 +803,7 @@ fn sent_to_recvmsg_init_v6() {
     let cmsg_vec = msg.cmsg_hdr_vec();
     println!("cmsg vec: {:?}", cmsg_vec);
     for cmsg_hdr in cmsg_vec {
-        if let CMsgType::Ipv6PktInfo = cmsg_hdr.get_type() {
+        if cmsg_hdr.get_type() == CMSG_TYPE_IPV6_PKTINFO {
             if let Some(ipv6_pktinfo) = cmsg_hdr.as_recvpktinfo_v6() {
                 println!("Found IPv6 pktinfo: {:?}", ipv6_pktinfo);
             }
@@ -855,7 +857,7 @@ fn sent_to_recvmsg_init_v4() {
     println!("cmsg vec: {:?}", cmsg_vec);
 
     for cmsg_hdr in cmsg_vec {
-        if let CMsgType::Ipv4PktInfo = cmsg_hdr.get_type() {
+        if cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO {
             if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
                 println!("Found IP pktinfo: {:?}", ip_pktinfo);
             }

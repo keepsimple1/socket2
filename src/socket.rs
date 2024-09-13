@@ -669,7 +669,7 @@ impl Socket {
 
     /// Recvmsg with initialized buffers
     #[cfg(windows)]
-    pub fn recvmsg_init(&self, msg: &mut MsgHdrInit) -> io::Result<usize> {
+    pub fn recvmsg_init(&self, msg: &mut MsgHdrInit, _flags: sys::c_int) -> io::Result<usize> {
         let wsarecvmsg = self.wsarecvmsg.unwrap();
         let mut read_bytes = 0;
         let error_code = {

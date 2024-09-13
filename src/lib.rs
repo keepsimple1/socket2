@@ -65,7 +65,7 @@ use std::marker::PhantomData;
 #[cfg(not(target_os = "redox"))]
 use std::mem;
 use std::mem::MaybeUninit;
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use std::{fmt, ptr};
@@ -200,7 +200,7 @@ pub use sockref::SockRef;
     target_os = "solaris",
 )))]
 pub use socket::InterfaceIndexOrAddress;
-use windows_sys::Win32::Networking::WinSock::IN6_PKTINFO;
+use windows_sys::Win32::Networking::WinSock::{IN6_PKTINFO, IN_PKTINFO};
 
 /// Specification of the communication domain for a socket.
 ///
@@ -852,7 +852,6 @@ impl CMsgHdr<'_> {
     }
 
     /// Decode this header as IN_PKTINFO
-    #[cfg(not(windows))]
     pub fn as_pktinfo_v4(&self) -> Option<PktInfo> {
         if self.inner.cmsg_level != sys::IPPROTO_IP {
             return None;
@@ -862,13 +861,29 @@ impl CMsgHdr<'_> {
             return None;
         }
 
+        #[cfg(not(windows))]
         let raw_ptr = self.inner as *const sys::cmsghdr;
 
+        #[cfg(not(windows))]
         let datap = unsafe { CMSG_DATA(raw_ptr) };
+
+        let datap = self.inner.cmsg_data();
+
+        #[cfg(not(windows))]
         let pktinfo = unsafe { ptr::read_unaligned(datap as *const libc::in_pktinfo) };
+
+        #[cfg(windows)]
+        let pktinfo = unsafe { ptr::read_unaligned(datap as *const IN_PKTINFO) };
+
+        #[cfg(not(windows))]
+        let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr)));
+
+        #[cfg(windows)]
+        let addr_dst = IpAddr::V4(Ipv4Addr::from(unsafe { pktinfo.ipi_addr.S_un.S_addr }));
+
         Some(PktInfo {
             if_index: pktinfo.ipi_ifindex as _,
-            addr_dst: IpAddr::V4(Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr))),
+            addr_dst,
         })
     }
 
