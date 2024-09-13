@@ -761,7 +761,7 @@ fn send_to_recv_from_init() {
     assert_eq!(sent, data.len());
 
     let mut buffer = vec![0; data.len()];
-    let received = socket_b.recv_from_init(&mut buffer).unwrap();
+    let received = socket_b.recv_from_initialized(&mut buffer).unwrap();
     assert_eq!(received.0, data.len());
     assert_eq!(received.1, addr_a);
     assert_eq!(&buffer, data);

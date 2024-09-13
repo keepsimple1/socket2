@@ -553,7 +553,7 @@ impl Socket {
 
     /// Receives data from the socket with `buf` that is fully initialized.
     /// On success, returns the number of bytes read and the address from where the data came.
-    pub fn recv_from_init(&self, buf: &mut [u8]) -> io::Result<(usize, SockAddr)> {
+    pub fn recv_from_initialized(&self, buf: &mut [u8]) -> io::Result<(usize, SockAddr)> {
         // Safety: the `recv_from` implementation promises not to write uninitialised
         // bytes to the buffer, so this casting is safe.
         let buf_uninit = unsafe { &mut *(buf as *mut [u8] as *mut [MaybeUninit<u8>]) };
