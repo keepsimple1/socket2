@@ -103,6 +103,7 @@ macro_rules! syscall {
     ($fn: ident ( $($arg: expr),* $(,)* ), $err_test: path, $err_value: expr) => {{
         #[allow(unused_unsafe)]
         let res = unsafe { windows_sys::Win32::Networking::WinSock::$fn($($arg, )*) };
+        println!("syscall result: {}", &res);
         if $err_test(&res, &$err_value) {
             Err(io::Error::last_os_error())
         } else {
@@ -220,6 +221,7 @@ use crate::CMsgOps;
 
 impl CMsgOps for msghdr {
     fn cmsg_first_hdr(&self) -> *mut cmsghdr {
+        println!("Control len: {}", self.Control.len);
         if self.Control.len as usize >= mem::size_of::<cmsghdr>() {
             self.Control.buf as *mut cmsghdr
         } else {
@@ -759,6 +761,7 @@ pub(crate) fn locate_wsarecvmsg(socket: Socket) -> io::Result<WSARecvMsgExtensio
             None,
         )
     };
+
     if r != 0 {
         return Err(io::Error::last_os_error());
     }

@@ -1695,7 +1695,7 @@ impl Socket {
 
     /// Enable recvmsg on windows
     #[cfg(windows)]
-    pub fn enable_recvmsg(&mut self) -> io::Result<()> {
+    pub fn enable_wsarecvmsg(&mut self) -> io::Result<()> {
         if self.wsarecvmsg.is_none() {
             let wsarecvmsg = sys::locate_wsarecvmsg(self.as_raw())?;
             self.wsarecvmsg = Some(wsarecvmsg);
@@ -1705,7 +1705,9 @@ impl Socket {
 
     /// Set PKTINFO for this socket.
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
-        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, 1) }
+        println!("will call syscall for IP_PKINFO");
+        let enable: i32 = 1;
+        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, enable) }
     }
 
     /// Set PKTINFO for this socket.

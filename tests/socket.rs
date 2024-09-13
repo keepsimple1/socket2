@@ -833,14 +833,17 @@ fn sent_to_recvmsg_init_v4() {
 
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
-    let mut msg_control = vec![0; 1024];
+    let mut msg_control = vec![0; socket2::CONTROL_PKTINFOV6_BUFFER_SIZE];
     let mut msg = MsgHdrInit::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
         .with_control(&mut msg_control);
 
+    // #[cfg(windows)]
+    // socket_b.enable_wsarecvmsg().unwrap();
+
     // Set the socket option.
-    socket_b.set_pktinfo_v4().unwrap();
+    // socket_b.set_pktinfo_v4().unwrap();
 
     // Receive a mesage.
     let received = socket_b.recvmsg_init(&mut msg, 0).unwrap();
@@ -963,7 +966,13 @@ fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     // Use ephemeral ports assigned by the OS.
     let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
     let socket_a = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
-    let socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
+    let mut socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
+
+    #[cfg(windows)]
+    socket_b.enable_wsarecvmsg().unwrap();
+
+    // Set the socket option.
+    socket_b.set_pktinfo_v4().unwrap();
 
     socket_a.bind(&unspecified_addr.into()).unwrap();
     socket_b.bind(&unspecified_addr.into()).unwrap();
