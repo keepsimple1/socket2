@@ -181,10 +181,11 @@ mod sys;
 #[cfg(not(any(windows, unix)))]
 compile_error!("Socket2 doesn't support the compile target");
 
+#[cfg(not(windows))]
 use libc::{
     cmsghdr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, IPPROTO_IP, IPPROTO_IPV6, IPV6_PKTINFO,
-    IP_PKTINFO,
 };
+
 use sys::c_int;
 
 pub use sockaddr::SockAddr;
@@ -199,6 +200,7 @@ pub use sockref::SockRef;
     target_os = "solaris",
 )))]
 pub use socket::InterfaceIndexOrAddress;
+use windows_sys::Win32::Networking::WinSock::IN6_PKTINFO;
 
 /// Specification of the communication domain for a socket.
 ///
@@ -789,17 +791,20 @@ impl MsgHdrInit {
     }
 
     /// Returns the list of control message headers.
+    // #[cfg(not(windows))]
     pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr<'_>> {
         let mut cmsg_vec = Vec::new();
-        let msg = &self.inner as *const sys::msghdr;
+        // let msg = &self.inner as *const sys::msghdr;
 
         unsafe {
-            let mut cmsg: *mut cmsghdr = CMSG_FIRSTHDR(msg);
+            // let mut cmsg: *mut cmsghdr = CMSG_FIRSTHDR(msg);
+            let mut cmsg = self.inner.cmsg_first_hdr();
             if !cmsg.is_null() {
                 let cmsg_hdr = CMsgHdr { inner: &*cmsg };
                 cmsg_vec.push(cmsg_hdr);
 
-                cmsg = CMSG_NXTHDR(msg, cmsg);
+                // cmsg = CMSG_NXTHDR(msg, cmsg);
+                cmsg = self.inner.cmsg_next_hdr(&*cmsg);
                 while !cmsg.is_null() {
                     let cmsg_hdr = CMsgHdr { inner: &*cmsg };
                     cmsg_vec.push(cmsg_hdr);
@@ -818,7 +823,13 @@ impl fmt::Debug for MsgHdrInit {
     }
 }
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+pub(crate) trait CMsgOps {
+    fn cmsg_first_hdr(&self) -> *mut sys::cmsghdr;
+
+    fn cmsg_next_hdr(&self, cmsg: &sys::cmsghdr) -> *mut sys::cmsghdr;
+}
+
+use std::net::{IpAddr, Ipv6Addr};
 
 /// Reprsents control message in `MsgHdrInit`
 #[cfg(not(target_os = "redox"))]
@@ -830,27 +841,24 @@ impl CMsgHdr<'_> {
     /// Get the cmsg level
     pub fn get_level(&self) -> IpProto {
         match self.inner.cmsg_level {
-            IPPROTO_IP => IpProto::IP,
+            sys::IPPROTO_IP => IpProto::IP,
             _ => IpProto::Unknown,
         }
     }
 
     /// Get the cmsg type
     pub fn get_type(&self) -> CMsgType {
-        match self.inner.cmsg_type {
-            IP_PKTINFO => CMsgType::Ipv4PktInfo,
-            IPV6_PKTINFO => CMsgType::Ipv6PktInfo,
-            _ => CMsgType::Unknown,
-        }
+        CMsgType(self.inner.cmsg_type)
     }
 
     /// Decode this header as IN_PKTINFO
+    #[cfg(not(windows))]
     pub fn as_pktinfo_v4(&self) -> Option<PktInfo> {
-        if self.inner.cmsg_level != IPPROTO_IP {
+        if self.inner.cmsg_level != sys::IPPROTO_IP {
             return None;
         }
 
-        if self.inner.cmsg_type != IP_PKTINFO {
+        if self.inner.cmsg_type != sys::IP_PKTINFO {
             return None;
         }
 
@@ -866,22 +874,36 @@ impl CMsgHdr<'_> {
 
     /// Decode this header as IN6_PKTINFO
     pub fn as_recvpktinfo_v6(&self) -> Option<PktInfo> {
-        if self.inner.cmsg_level != IPPROTO_IPV6 {
+        if self.inner.cmsg_level != sys::IPPROTO_IPV6 {
             return None;
         }
 
-        if self.inner.cmsg_type != IPV6_PKTINFO {
+        if self.inner.cmsg_type != sys::IPV6_PKTINFO {
             return None;
         }
 
-        let raw_ptr = self.inner as *const sys::cmsghdr;
-        let datap = unsafe { CMSG_DATA(raw_ptr) };
+        // let raw_ptr = self.inner as *const sys::cmsghdr;
+        // let datap = unsafe { CMSG_DATA(raw_ptr) };
+        let datap = self.inner.cmsg_data();
+
+        #[cfg(not(windows))]
         let pktinfo = unsafe { ptr::read_unaligned(datap as *const libc::in6_pktinfo) };
+
+        #[cfg(windows)]
+        let pktinfo = unsafe { ptr::read_unaligned(datap as *const IN6_PKTINFO) };
+
+        #[cfg(windows)]
+        let addr_dst = IpAddr::V6(Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte }));
+
         Some(PktInfo {
             if_index: pktinfo.ipi6_ifindex as _,
-            addr_dst: IpAddr::V6(Ipv6Addr::from(pktinfo.ipi6_addr.s6_addr)),
+            addr_dst,
         })
     }
+}
+
+pub(crate) trait CMsgHdrOps {
+    fn cmsg_data(&self) -> *mut u8;
 }
 
 #[cfg(not(target_os = "redox"))]
@@ -917,13 +939,10 @@ pub enum IpProto {
 
 /// Represents available types of control messages.
 #[derive(Debug)]
-pub enum CMsgType {
-    /// A place hoder for unknown types.
-    Unknown,
+pub struct CMsgType(i32);
 
-    /// IPv4 PKT INFO msg
-    Ipv4PktInfo,
+/// constant for cmsghdr type
+pub const CMSG_TYPE_IP_PKTINFO: CMsgType = CMsgType(sys::IP_PKTINFO);
 
-    /// IPv6 PKT INFO msg
-    Ipv6PktInfo,
-}
+/// constant for cmsghdr type in IPv6
+pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = CMsgType(sys::IPV6_PKTINFO);

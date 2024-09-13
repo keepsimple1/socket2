@@ -27,6 +27,9 @@ use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
+#[cfg(windows)]
+use crate::sys::WSARecvMsgExtension;
+
 /// Owned wrapper around a system socket.
 ///
 /// This type simply wraps an instance of a file descriptor (`c_int`) on Unix
@@ -74,6 +77,9 @@ use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 /// ```
 pub struct Socket {
     inner: Inner,
+
+    #[cfg(windows)]
+    wsarecvmsg: Option<WSARecvMsgExtension>,
 }
 
 /// Store a `TcpStream` internally to take advantage of its niche optimizations on Unix platforms.
@@ -106,6 +112,8 @@ impl Socket {
                 assert!(raw >= 0, "tried to create a `Socket` with an invalid fd");
                 sys::socket_from_raw(raw)
             },
+
+            wsarecvmsg: None,
         }
     }
 
@@ -657,6 +665,30 @@ impl Socket {
     #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
     pub fn recvmsg_init(&self, msg: &mut MsgHdrInit, flags: sys::c_int) -> io::Result<usize> {
         sys::recvmsg_init(self.as_raw(), msg, flags)
+    }
+
+    /// Recvmsg with initialized buffers
+    #[cfg(windows)]
+    pub fn recvmsg_init(&self, msg: &mut MsgHdrInit) -> io::Result<usize> {
+        let wsarecvmsg = self.wsarecvmsg.unwrap();
+        let mut read_bytes = 0;
+        let error_code = {
+            unsafe {
+                (wsarecvmsg)(
+                    self.as_raw() as _,
+                    &mut msg.inner,
+                    &mut read_bytes,
+                    std::ptr::null_mut(),
+                    None,
+                )
+            }
+        };
+
+        if error_code != 0 {
+            return Err(io::Error::last_os_error());
+        }
+
+        Ok(read_bytes as usize)
     }
 
     /// Sends data on the socket to a connected peer.
@@ -1661,6 +1693,16 @@ impl Socket {
         }
     }
 
+    /// Enable recvmsg on windows
+    #[cfg(windows)]
+    pub fn enable_recvmsg(&mut self) -> io::Result<()> {
+        if self.wsarecvmsg.is_none() {
+            let wsarecvmsg = sys::locate_wsarecvmsg(self.as_raw())?;
+            self.wsarecvmsg = Some(wsarecvmsg);
+        }
+        Ok(())
+    }
+
     /// Set PKTINFO for this socket.
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, 1) }
@@ -1668,7 +1710,13 @@ impl Socket {
 
     /// Set PKTINFO for this socket.
     pub fn set_recv_pktinfo_v6(&self) -> io::Result<()> {
-        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IPV6, sys::IPV6_RECVPKTINFO, 1) }
+        #[cfg(not(windows))]
+        let optname = sys::IPV6_RECVPKTINFO;
+
+        #[cfg(windows)]
+        let optname = sys::IPV6_PKTINFO;
+
+        unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IPV6, optname, 1) }
     }
 }
 
