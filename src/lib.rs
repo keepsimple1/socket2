@@ -848,7 +848,7 @@ impl CMsgHdr<'_> {
 
     /// Get the cmsg type
     pub fn get_type(&self) -> CMsgType {
-        CMsgType(self.inner.cmsg_type)
+        self.inner.cmsg_type
     }
 
     /// Decode this header as IN_PKTINFO
@@ -938,11 +938,10 @@ pub enum IpProto {
 }
 
 /// Represents available types of control messages.
-#[derive(Debug)]
-pub struct CMsgType(i32);
+pub type CMsgType = i32;
 
 /// constant for cmsghdr type
-pub const CMSG_TYPE_IP_PKTINFO: CMsgType = CMsgType(sys::IP_PKTINFO);
+pub const CMSG_TYPE_IP_PKTINFO: CMsgType = sys::IP_PKTINFO;
 
 /// constant for cmsghdr type in IPv6
-pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = CMsgType(sys::IPV6_PKTINFO);
+pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = sys::IPV6_PKTINFO;
