@@ -769,9 +769,13 @@ fn send_to_recv_from_init() {
 
 #[test]
 fn sent_to_recvmsg_init_v6() {
-    let (socket_a, socket_b) = udp_pair_unconnected();
+    let (socket_a, mut socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
     let addr_b = socket_b.local_addr().unwrap();
+
+    // Allow recvmsg on this socket.
+    #[cfg(windows)]
+    socket_b.enable_wsarecvmsg().unwrap();
 
     let data = b"sent_to_recvmsg_init";
     let sent = socket_a.send_to(data, &addr_b).unwrap();
@@ -933,6 +937,9 @@ fn udp_pair_unconnected() -> (Socket, Socket) {
     let unspecified_addr = SocketAddrV6::new(Ipv6Addr::LOCALHOST, 0, 0, 0);
     let socket_a = Socket::new(Domain::IPV6, Type::DGRAM, None).unwrap();
     let socket_b = Socket::new(Domain::IPV6, Type::DGRAM, None).unwrap();
+
+    // Set the socket option before bind.
+    socket_b.set_recv_pktinfo_v6().unwrap();
 
     socket_a.bind(&unspecified_addr.into()).unwrap();
     socket_b.bind(&unspecified_addr.into()).unwrap();
