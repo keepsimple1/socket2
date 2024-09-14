@@ -892,15 +892,8 @@ impl CMsgHdr {
             return None;
         }
 
-        // let raw_ptr = self.inner as *const sys::cmsghdr;
-        // let datap = unsafe { CMSG_DATA(raw_ptr) };
-        let datap = self.inner.cmsg_data();
-
-        #[cfg(not(windows))]
-        let pktinfo = unsafe { ptr::read_unaligned(datap as *const libc::in6_pktinfo) };
-
-        #[cfg(windows)]
-        let pktinfo = unsafe { ptr::read_unaligned(datap as *const IN6_PKTINFO) };
+        let data_ptr = self.inner.cmsg_data();
+        let pktinfo = unsafe { ptr::read_unaligned(data_ptr as *const sys::In6PktInfo) };
 
         #[cfg(windows)]
         let addr_dst = IpAddr::V6(Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte }));
