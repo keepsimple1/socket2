@@ -181,11 +181,6 @@ mod sys;
 #[cfg(not(any(windows, unix)))]
 compile_error!("Socket2 doesn't support the compile target");
 
-// #[cfg(not(windows))]
-// use libc::{
-//     cmsghdr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, IPPROTO_IP, IPPROTO_IPV6, IPV6_PKTINFO,
-// };
-
 use sys::c_int;
 
 pub use sockaddr::SockAddr;
@@ -749,17 +744,17 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 ///
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows.
 #[cfg(not(target_os = "redox"))]
-pub struct MsgHdrInitialized {
+pub struct MsgHdrInit {
     inner: sys::msghdr,
 }
 
 #[cfg(not(target_os = "redox"))]
-impl MsgHdrInitialized {
+impl MsgHdrInit {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> MsgHdrInitialized {
+    pub fn new() -> MsgHdrInit {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
-        MsgHdrInitialized {
+        MsgHdrInit {
             inner: unsafe { mem::zeroed() },
         }
     }
@@ -819,7 +814,7 @@ impl MsgHdrInitialized {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl fmt::Debug for MsgHdrInitialized {
+impl fmt::Debug for MsgHdrInit {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
     }

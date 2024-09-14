@@ -72,7 +72,7 @@ use libc::{
     in6_addr, in6_pktinfo, in_addr, in_pktinfo, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE,
 };
 
-use crate::{Domain, MsgHdrInitialized, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MsgHdr, MsgHdrMut, RecvFlags};
 
@@ -1120,7 +1120,7 @@ pub(crate) fn recvmsg(
 #[cfg(not(target_os = "redox"))]
 pub(crate) fn recvmsg_init(
     fd: Socket,
-    msg: &mut MsgHdrInitialized,
+    msg: &mut MsgHdrInit,
     flags: c_int,
 ) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)

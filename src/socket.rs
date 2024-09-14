@@ -23,7 +23,7 @@ use std::time::Duration;
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
-use crate::{Domain, MsgHdrInitialized, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
@@ -666,7 +666,7 @@ impl Socket {
     #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
     pub fn recvmsg_init(
         &self,
-        msg: &mut MsgHdrInitialized,
+        msg: &mut MsgHdrInit,
         flags: sys::c_int,
     ) -> io::Result<usize> {
         sys::recvmsg_init(self.as_raw(), msg, flags)
@@ -676,7 +676,7 @@ impl Socket {
     #[cfg(windows)]
     pub fn recvmsg_init(
         &self,
-        msg: &mut MsgHdrInitialized,
+        msg: &mut MsgHdrInit,
         _flags: sys::c_int,
     ) -> io::Result<usize> {
         let wsarecvmsg = self.wsarecvmsg.unwrap();
