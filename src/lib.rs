@@ -833,15 +833,15 @@ pub(crate) trait CMsgOps {
 
 use std::net::{IpAddr, Ipv6Addr};
 
-const CMSG_HEADER_SIZE: usize = mem::size_of::<sys::cmsghdr>();
-const PKTINFOV4_DATA_SIZE: usize = mem::size_of::<IN_PKTINFO>();
-const PKTINFOV6_DATA_SIZE: usize = mem::size_of::<IN6_PKTINFO>();
+// const CMSG_HEADER_SIZE: usize = mem::size_of::<sys::cmsghdr>();
+// const PKTINFOV4_DATA_SIZE: usize = mem::size_of::<IN_PKTINFO>();
+// const PKTINFOV6_DATA_SIZE: usize = mem::size_of::<IN6_PKTINFO>();
 
-/// buffer size for IPv4 pktinfo control
-pub const CONTROL_PKTINFOV4_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV4_DATA_SIZE;
+// /// buffer size for IPv4 pktinfo control
+// pub const CONTROL_PKTINFOV4_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV4_DATA_SIZE;
 
-/// buffer size for IPv6 pktinfo
-pub const CONTROL_PKTINFOV6_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV6_DATA_SIZE + 8;
+// /// buffer size for IPv6 pktinfo
+// pub const CONTROL_PKTINFOV6_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV6_DATA_SIZE + 8;
 
 /// Reprsents control message in `MsgHdrInit`
 #[cfg(not(target_os = "redox"))]
@@ -924,6 +924,7 @@ impl CMsgHdr<'_> {
         #[cfg(windows)]
         let addr_dst = IpAddr::V6(Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte }));
 
+        let addr_dst = IpAddr::V6(Ipv6Addr::from(pktinfo.ipi6_addr.s6_addr));
         Some(PktInfo {
             if_index: pktinfo.ipi6_ifindex as _,
             addr_dst,
@@ -932,7 +933,14 @@ impl CMsgHdr<'_> {
 }
 
 pub(crate) trait CMsgHdrOps {
+    /// Returns a pointer to the data portion of a cmsghdr.
     fn cmsg_data(&self) -> *mut u8;
+}
+
+/// Given a payload of `data_len`, returns the number of bytes a control message occupies.
+/// i.e. it includes the header, the data and the alignments.
+pub fn cmsg_space(data_len: usize) -> usize {
+    sys::_cmsg_space(data_len)
 }
 
 #[cfg(not(target_os = "redox"))]

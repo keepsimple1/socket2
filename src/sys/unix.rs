@@ -68,7 +68,7 @@ use std::{io, slice};
     target_os = "watchos",
 )))]
 use libc::ssize_t;
-use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR};
+use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 use crate::{Domain, MsgHdrInitialized, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
@@ -1142,6 +1142,12 @@ impl CMsgHdrOps for cmsghdr {
     fn cmsg_data(&self) -> *mut u8 {
         unsafe { CMSG_DATA(self) }
     }
+}
+
+/// Given a payload of `data_len`, returns the number of bytes a control message occupies.
+/// i.e. it includes the header, the data and the alignments.
+pub(crate) fn _cmsg_space(data_len: usize) -> usize {
+    unsafe { CMSG_SPACE(data_len as _) as usize }
 }
 
 pub(crate) fn send(fd: Socket, buf: &[u8], flags: c_int) -> io::Result<usize> {
