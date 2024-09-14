@@ -113,6 +113,7 @@ impl Socket {
                 sys::socket_from_raw(raw)
             },
 
+            #[cfg(windows)]
             wsarecvmsg: None,
         }
     }

@@ -68,9 +68,9 @@ use std::{io, slice};
     target_os = "watchos",
 )))]
 use libc::ssize_t;
-use libc::{in6_addr, in_addr};
+use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR};
 
-use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, MsgHdrInitialized, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MsgHdr, MsgHdrMut, RecvFlags};
 
@@ -246,7 +246,7 @@ pub(crate) use libc::{
 pub(crate) use libc::{TCP_KEEPCNT, TCP_KEEPINTVL};
 
 #[cfg(any(target_os = "macos", target_os = "linux",))]
-pub(crate) use libc::{IPV6_RECVPKTINFO, IP_PKTINFO};
+pub(crate) use libc::{IPV6_PKTINFO, IPV6_RECVPKTINFO, IP_PKTINFO};
 
 // See this type in the Windows file.
 pub(crate) type Bool = c_int;
@@ -1116,8 +1116,32 @@ pub(crate) fn recvmsg(
 }
 
 #[cfg(not(target_os = "redox"))]
-pub(crate) fn recvmsg_init(fd: Socket, msg: &mut MsgHdrInit, flags: c_int) -> io::Result<usize> {
+pub(crate) fn recvmsg_init(
+    fd: Socket,
+    msg: &mut MsgHdrInitialized,
+    flags: c_int,
+) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
+}
+
+use crate::CMsgOps;
+
+impl CMsgOps for msghdr {
+    fn cmsg_first_hdr(&self) -> *mut cmsghdr {
+        unsafe { CMSG_FIRSTHDR(self) }
+    }
+
+    fn cmsg_next_hdr(&self, cmsg: &cmsghdr) -> *mut cmsghdr {
+        unsafe { CMSG_NXTHDR(self, cmsg) }
+    }
+}
+
+use crate::CMsgHdrOps;
+
+impl CMsgHdrOps for cmsghdr {
+    fn cmsg_data(&self) -> *mut u8 {
+        unsafe { CMSG_DATA(self) }
+    }
 }
 
 pub(crate) fn send(fd: Socket, buf: &[u8], flags: c_int) -> io::Result<usize> {

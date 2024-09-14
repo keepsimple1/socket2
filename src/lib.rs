@@ -181,10 +181,10 @@ mod sys;
 #[cfg(not(any(windows, unix)))]
 compile_error!("Socket2 doesn't support the compile target");
 
-#[cfg(not(windows))]
-use libc::{
-    cmsghdr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, IPPROTO_IP, IPPROTO_IPV6, IPV6_PKTINFO,
-};
+// #[cfg(not(windows))]
+// use libc::{
+//     cmsghdr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, IPPROTO_IP, IPPROTO_IPV6, IPV6_PKTINFO,
+// };
 
 use sys::c_int;
 
@@ -200,6 +200,8 @@ pub use sockref::SockRef;
     target_os = "solaris",
 )))]
 pub use socket::InterfaceIndexOrAddress;
+
+#[cfg(windows)]
 use windows_sys::Win32::Networking::WinSock::{IN6_PKTINFO, IN_PKTINFO};
 
 /// Specification of the communication domain for a socket.
@@ -871,11 +873,11 @@ impl CMsgHdr<'_> {
             return None;
         }
 
-        #[cfg(not(windows))]
-        let raw_ptr = self.inner as *const sys::cmsghdr;
+        // #[cfg(not(windows))]
+        // let raw_ptr = self.inner as *const sys::cmsghdr;
 
-        #[cfg(not(windows))]
-        let datap = unsafe { CMSG_DATA(raw_ptr) };
+        // #[cfg(not(windows))]
+        // let datap = unsafe { CMSG_DATA(raw_ptr) };
 
         let datap = self.inner.cmsg_data();
 
