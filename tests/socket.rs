@@ -802,7 +802,7 @@ fn sent_to_recvmsg_init_v6() {
         .with_control(&mut msg_control);
 
     socket_b.set_recv_pktinfo_v6().unwrap();
-    let received = socket_b.recvmsg_init(&mut msg, 0).unwrap();
+    let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
     assert_eq!(received, data.len());
     assert_eq!(sockaddr, addr_a);
@@ -855,7 +855,7 @@ fn sent_to_recvmsg_init_v4() {
         .with_control(&mut msg_control);
 
     // Receive a mesage.
-    let received = socket_b.recvmsg_init(&mut msg, 0).unwrap();
+    let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
     // Verify the data received.
     assert_eq!(received, data.len());
