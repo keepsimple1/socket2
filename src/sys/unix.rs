@@ -68,7 +68,7 @@ use std::{io, slice};
     target_os = "watchos",
 )))]
 use libc::ssize_t;
-use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
+use libc::{in6_addr, in_addr};
 
 use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
@@ -1135,6 +1135,7 @@ impl MsgHdrOps for msghdr {
 }
 
 use crate::CMsgHdrOps;
+use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 impl CMsgHdrOps for cmsghdr {
     fn cmsg_data(&self) -> *mut u8 {
