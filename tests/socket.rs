@@ -49,7 +49,9 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
+use socket2::cmsg_space;
 use socket2::MsgHdrInitialized;
+use socket2::PktInfo;
 use socket2::CMSG_TYPE_IPV6_PKTINFO;
 use socket2::CMSG_TYPE_IP_PKTINFO;
 #[cfg(windows)]
@@ -769,7 +771,7 @@ fn send_to_recv_from_init() {
 
 #[test]
 fn sent_to_recvmsg_init_v6() {
-    let (socket_a, mut socket_b) = udp_pair_unconnected();
+    let (socket_a, socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
     let addr_b = socket_b.local_addr().unwrap();
 
@@ -791,7 +793,7 @@ fn sent_to_recvmsg_init_v6() {
 
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
-    let mut msg_control = vec![0; 1024];
+    let mut msg_control = vec![0; cmsg_space(PktInfo::size_v6())];
     let mut msg = MsgHdrInitialized::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
@@ -837,7 +839,7 @@ fn sent_to_recvmsg_init_v4() {
 
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
-    let mut msg_control = vec![0; socket2::CONTROL_PKTINFOV6_BUFFER_SIZE];
+    let mut msg_control = vec![0; cmsg_space(PktInfo::size_v4())];
     let mut msg = MsgHdrInitialized::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
@@ -967,7 +969,7 @@ fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     // Use ephemeral ports assigned by the OS.
     let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
     let socket_a = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
-    let mut socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
+    let socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
 
     // Allow recvmsg on this socket.
     #[cfg(windows)]

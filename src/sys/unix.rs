@@ -68,7 +68,9 @@ use std::{io, slice};
     target_os = "watchos",
 )))]
 use libc::ssize_t;
-use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
+use libc::{
+    in6_addr, in6_pktinfo, in_addr, in_pktinfo, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE,
+};
 
 use crate::{Domain, MsgHdrInitialized, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
@@ -1149,6 +1151,9 @@ impl CMsgHdrOps for cmsghdr {
 pub(crate) fn _cmsg_space(data_len: usize) -> usize {
     unsafe { CMSG_SPACE(data_len as _) as usize }
 }
+
+pub(crate) const IN_PKTINFO_SIZE: usize = mem::size_of::<in_pktinfo>();
+pub(crate) const IN6_PKTINFO_SIZE: usize = mem::size_of::<in6_pktinfo>();
 
 pub(crate) fn send(fd: Socket, buf: &[u8], flags: c_int) -> io::Result<usize> {
     syscall!(send(

@@ -1714,7 +1714,6 @@ impl Socket {
 
     /// Set PKTINFO for this socket.
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
-        println!("will call syscall for IP_PKINFO");
         let enable: i32 = 1;
         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, enable) }
     }

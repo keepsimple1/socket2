@@ -964,6 +964,18 @@ pub struct PktInfo {
     pub addr_dst: IpAddr,
 }
 
+impl PktInfo {
+    /// The size in bytes for IPv4 pktinfo
+    pub fn size_v4() -> usize {
+        sys::IN_PKTINFO_SIZE
+    }
+
+    /// The size in bytes for IPv6 pktinfo
+    pub fn size_v6() -> usize {
+        sys::IN6_PKTINFO_SIZE
+    }
+}
+
 /// Represents available protocols
 #[derive(Debug)]
 pub enum IpProto {
