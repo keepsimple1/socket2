@@ -794,7 +794,7 @@ impl MsgHdrInitialized {
 
     /// Returns the list of control message headers.
     // #[cfg(not(windows))]
-    pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr<'_>> {
+    pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr> {
         let mut cmsg_vec = Vec::new();
         // let msg = &self.inner as *const sys::msghdr;
 
@@ -802,13 +802,13 @@ impl MsgHdrInitialized {
             // let mut cmsg: *mut cmsghdr = CMSG_FIRSTHDR(msg);
             let mut cmsg = self.inner.cmsg_first_hdr();
             if !cmsg.is_null() {
-                let cmsg_hdr = CMsgHdr { inner: &*cmsg };
+                let cmsg_hdr = CMsgHdr { inner: *cmsg };
                 cmsg_vec.push(cmsg_hdr);
 
                 // cmsg = CMSG_NXTHDR(msg, cmsg);
                 cmsg = self.inner.cmsg_next_hdr(&*cmsg);
                 while !cmsg.is_null() {
-                    let cmsg_hdr = CMsgHdr { inner: &*cmsg };
+                    let cmsg_hdr = CMsgHdr { inner: *cmsg };
                     cmsg_vec.push(cmsg_hdr);
                 }
             }
@@ -845,11 +845,11 @@ use std::net::{IpAddr, Ipv6Addr};
 
 /// Reprsents control message in `MsgHdrInit`
 #[cfg(not(target_os = "redox"))]
-pub struct CMsgHdr<'a> {
-    inner: &'a sys::cmsghdr,
+pub struct CMsgHdr {
+    inner: sys::cmsghdr,
 }
 
-impl CMsgHdr<'_> {
+impl CMsgHdr {
     /// Get the cmsg level
     pub fn get_level(&self) -> IpProto {
         match self.inner.cmsg_level {
@@ -944,7 +944,7 @@ pub fn cmsg_space(data_len: usize) -> usize {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl<'a> fmt::Debug for CMsgHdr<'a> {
+impl<'a> fmt::Debug for CMsgHdr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

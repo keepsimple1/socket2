@@ -807,14 +807,19 @@ fn sent_to_recvmsg_init_v6() {
     assert_eq!(buffer, data);
 
     let cmsg_vec = msg.cmsg_hdr_vec();
+    assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
+
+    let mut pktinfo_found = false;
     for cmsg_hdr in cmsg_vec {
         if cmsg_hdr.get_type() == CMSG_TYPE_IPV6_PKTINFO {
             if let Some(ipv6_pktinfo) = cmsg_hdr.as_recvpktinfo_v6() {
-                println!("Found IPv6 pktinfo: {:?}", ipv6_pktinfo);
+                pktinfo_found = true;
+                println!("control message: v6 pktinfo: {:?}", ipv6_pktinfo);
             }
         }
     }
+    assert!(pktinfo_found);
 }
 
 #[test]
@@ -857,12 +862,13 @@ fn sent_to_recvmsg_init_v4() {
 
     // Verify the control message and the address that received the packet.
     let cmsg_vec = msg.cmsg_hdr_vec();
+    assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
 
     for cmsg_hdr in cmsg_vec {
         if cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO {
             if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
-                println!("Found IP pktinfo: {:?}", ip_pktinfo);
+                println!("control message: pktinfo: {:?}", ip_pktinfo);
             }
         }
     }
