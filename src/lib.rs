@@ -889,7 +889,9 @@ impl CMsgHdr<'_> {
         let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr)));
 
         #[cfg(windows)]
-        let addr_dst = IpAddr::V4(Ipv4Addr::from(unsafe { pktinfo.ipi_addr.S_un.S_addr }));
+        let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(unsafe {
+            pktinfo.ipi_addr.S_un.S_addr
+        })));
 
         Some(PktInfo {
             if_index: pktinfo.ipi_ifindex as _,

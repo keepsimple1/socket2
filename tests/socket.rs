@@ -839,12 +839,6 @@ fn sent_to_recvmsg_init_v4() {
         .with_buffers(&mut bufs)
         .with_control(&mut msg_control);
 
-    // #[cfg(windows)]
-    // socket_b.enable_wsarecvmsg().unwrap();
-
-    // Set the socket option.
-    // socket_b.set_pktinfo_v4().unwrap();
-
     // Receive a mesage.
     let received = socket_b.recvmsg_init(&mut msg, 0).unwrap();
 
@@ -968,10 +962,11 @@ fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     let socket_a = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
     let mut socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
 
+    // Allow recvmsg on this socket.
     #[cfg(windows)]
     socket_b.enable_wsarecvmsg().unwrap();
 
-    // Set the socket option.
+    // Set the socket option before bind.
     socket_b.set_pktinfo_v4().unwrap();
 
     socket_a.bind(&unspecified_addr.into()).unwrap();
