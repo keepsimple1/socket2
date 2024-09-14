@@ -68,9 +68,7 @@ use std::{io, slice};
     target_os = "watchos",
 )))]
 use libc::ssize_t;
-use libc::{
-    in6_addr, in6_pktinfo, in_addr, in_pktinfo, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE,
-};
+use libc::{in6_addr, in_addr, CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
@@ -247,8 +245,10 @@ pub(crate) use libc::{
 ))]
 pub(crate) use libc::{TCP_KEEPCNT, TCP_KEEPINTVL};
 
-#[cfg(any(target_os = "macos", target_os = "linux",))]
-pub(crate) use libc::{IPV6_PKTINFO, IPV6_RECVPKTINFO, IP_PKTINFO};
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+pub(crate) use libc::{
+    in6_pktinfo as In6PktInfo, in_pktinfo as InPktInfo, IPV6_PKTINFO, IPV6_RECVPKTINFO, IP_PKTINFO,
+};
 
 // See this type in the Windows file.
 pub(crate) type Bool = c_int;
@@ -1148,8 +1148,8 @@ pub(crate) fn _cmsg_space(data_len: usize) -> usize {
     unsafe { CMSG_SPACE(data_len as _) as usize }
 }
 
-pub(crate) const IN_PKTINFO_SIZE: usize = mem::size_of::<in_pktinfo>();
-pub(crate) const IN6_PKTINFO_SIZE: usize = mem::size_of::<in6_pktinfo>();
+pub(crate) const IN_PKTINFO_SIZE: usize = mem::size_of::<InPktInfo>();
+pub(crate) const IN6_PKTINFO_SIZE: usize = mem::size_of::<In6PktInfo>();
 
 pub(crate) fn send(fd: Socket, buf: &[u8], flags: c_int) -> io::Result<usize> {
     syscall!(send(

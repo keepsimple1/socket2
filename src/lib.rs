@@ -865,13 +865,8 @@ impl CMsgHdr {
             return None;
         }
 
-        let datap = self.inner.cmsg_data();
-
-        #[cfg(not(windows))]
-        let pktinfo = unsafe { ptr::read_unaligned(datap as *const libc::in_pktinfo) };
-
-        #[cfg(windows)]
-        let pktinfo = unsafe { ptr::read_unaligned(datap as *const IN_PKTINFO) };
+        let data_ptr = self.inner.cmsg_data();
+        let pktinfo = unsafe { ptr::read_unaligned(data_ptr as *const sys::InPktInfo) };
 
         #[cfg(not(windows))]
         let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr)));
