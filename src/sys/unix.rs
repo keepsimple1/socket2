@@ -70,7 +70,7 @@ use std::{io, slice};
 use libc::ssize_t;
 use libc::{in6_addr, in_addr};
 
-use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MsgHdr, MsgHdrMut, RecvFlags};
 
@@ -1117,12 +1117,13 @@ pub(crate) fn recvmsg(
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 
+use crate::{CMsgHdrOps, MsgHdrInit, MsgHdrOps};
+use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
+
 #[cfg(not(target_os = "redox"))]
 pub(crate) fn recvmsg_init(fd: Socket, msg: &mut MsgHdrInit, flags: c_int) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
-
-use crate::MsgHdrOps;
 
 impl MsgHdrOps for msghdr {
     fn cmsg_first_hdr(&self) -> *mut cmsghdr {
@@ -1133,9 +1134,6 @@ impl MsgHdrOps for msghdr {
         unsafe { CMSG_NXTHDR(self, cmsg) }
     }
 }
-
-use crate::CMsgHdrOps;
-use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 impl CMsgHdrOps for cmsghdr {
     fn cmsg_data(&self) -> *mut u8 {
