@@ -1122,9 +1122,9 @@ pub(crate) fn recvmsg_init(fd: Socket, msg: &mut MsgHdrInit, flags: c_int) -> io
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 
-use crate::CMsgOps;
+use crate::MsgHdrOps;
 
-impl CMsgOps for msghdr {
+impl MsgHdrOps for msghdr {
     fn cmsg_first_hdr(&self) -> *mut cmsghdr {
         unsafe { CMSG_FIRSTHDR(self) }
     }

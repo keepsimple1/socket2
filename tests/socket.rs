@@ -52,6 +52,8 @@ use std::{env, fs};
 use socket2::cmsg_space;
 use socket2::MsgHdrInit;
 use socket2::PktInfo;
+use socket2::CMSG_LEVEL_IPPROTO_IP;
+use socket2::CMSG_LEVEL_IPPROTO_IPV6;
 use socket2::CMSG_TYPE_IPV6_PKTINFO;
 use socket2::CMSG_TYPE_IP_PKTINFO;
 #[cfg(windows)]
@@ -812,7 +814,9 @@ fn sent_to_recvmsg_init_v6() {
 
     let mut pktinfo_found = false;
     for cmsg_hdr in cmsg_vec {
-        if cmsg_hdr.get_type() == CMSG_TYPE_IPV6_PKTINFO {
+        if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IPV6
+            && cmsg_hdr.get_type() == CMSG_TYPE_IPV6_PKTINFO
+        {
             if let Some(ipv6_pktinfo) = cmsg_hdr.as_recvpktinfo_v6() {
                 pktinfo_found = true;
                 println!("control message: v6 pktinfo: {:?}", ipv6_pktinfo);
@@ -866,7 +870,9 @@ fn sent_to_recvmsg_init_v4() {
     println!("cmsg vec: {:?}", cmsg_vec);
 
     for cmsg_hdr in cmsg_vec {
-        if cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO {
+        if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IP
+            && cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO
+        {
             if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
                 println!("control message: pktinfo: {:?}", ip_pktinfo);
             }

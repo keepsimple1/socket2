@@ -788,7 +788,6 @@ impl MsgHdrInit {
     }
 
     /// Returns the list of control message headers.
-    // #[cfg(not(windows))]
     pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr> {
         let mut cmsg_vec = Vec::new();
         // let msg = &self.inner as *const sys::msghdr;
@@ -820,7 +819,8 @@ impl fmt::Debug for MsgHdrInit {
     }
 }
 
-pub(crate) trait CMsgOps {
+/// Common operations supported on `msghdr`
+pub(crate) trait MsgHdrOps {
     fn cmsg_first_hdr(&self) -> *mut sys::cmsghdr;
 
     fn cmsg_next_hdr(&self, cmsg: &sys::cmsghdr) -> *mut sys::cmsghdr;
@@ -846,11 +846,8 @@ pub struct CMsgHdr {
 
 impl CMsgHdr {
     /// Get the cmsg level
-    pub fn get_level(&self) -> IpProto {
-        match self.inner.cmsg_level {
-            sys::IPPROTO_IP => IpProto::IP,
-            _ => IpProto::Unknown,
-        }
+    pub fn get_level(&self) -> CMsgLevel {
+        self.inner.cmsg_level
     }
 
     /// Get the cmsg type
@@ -867,12 +864,6 @@ impl CMsgHdr {
         if self.inner.cmsg_type != sys::IP_PKTINFO {
             return None;
         }
-
-        // #[cfg(not(windows))]
-        // let raw_ptr = self.inner as *const sys::cmsghdr;
-
-        // #[cfg(not(windows))]
-        // let datap = unsafe { CMSG_DATA(raw_ptr) };
 
         let datap = self.inner.cmsg_data();
 
@@ -972,14 +963,13 @@ impl PktInfo {
 }
 
 /// Represents available protocols
-#[derive(Debug)]
-pub enum IpProto {
-    /// A placeholder for unknown protocols.
-    Unknown,
+pub type CMsgLevel = i32;
 
-    /// IPv4 protocol
-    IP,
-}
+/// constant for cmsg_level of IPPROTO_IP
+pub const CMSG_LEVEL_IPPROTO_IP: CMsgLevel = sys::IPPROTO_IP;
+
+/// constant for cmsg_level of IPPROTO_IPV6
+pub const CMSG_LEVEL_IPPROTO_IPV6: CMsgLevel = sys::IPPROTO_IPV6;
 
 /// Represents available types of control messages.
 pub type CMsgType = i32;
