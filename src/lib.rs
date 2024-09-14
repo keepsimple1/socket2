@@ -747,17 +747,17 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 ///
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows.
 #[cfg(not(target_os = "redox"))]
-pub struct MsgHdrInit {
+pub struct MsgHdrInitialized {
     inner: sys::msghdr,
 }
 
 #[cfg(not(target_os = "redox"))]
-impl MsgHdrInit {
+impl MsgHdrInitialized {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> MsgHdrInit {
+    pub fn new() -> MsgHdrInitialized {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
-        MsgHdrInit {
+        MsgHdrInitialized {
             inner: unsafe { mem::zeroed() },
         }
     }
@@ -817,7 +817,7 @@ impl MsgHdrInit {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl fmt::Debug for MsgHdrInit {
+impl fmt::Debug for MsgHdrInitialized {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
     }

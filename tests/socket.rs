@@ -49,7 +49,7 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
-use socket2::MsgHdrInit;
+use socket2::MsgHdrInitialized;
 use socket2::CMSG_TYPE_IPV6_PKTINFO;
 use socket2::CMSG_TYPE_IP_PKTINFO;
 #[cfg(windows)]
@@ -788,7 +788,7 @@ fn sent_to_recvmsg_init_v6() {
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
     let mut msg_control = vec![0; 1024];
-    let mut msg = MsgHdrInit::new()
+    let mut msg = MsgHdrInitialized::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
         .with_control(&mut msg_control);
@@ -834,7 +834,7 @@ fn sent_to_recvmsg_init_v4() {
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
     let mut msg_control = vec![0; socket2::CONTROL_PKTINFOV6_BUFFER_SIZE];
-    let mut msg = MsgHdrInit::new()
+    let mut msg = MsgHdrInitialized::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
         .with_control(&mut msg_control);
