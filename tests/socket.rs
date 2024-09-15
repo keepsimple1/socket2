@@ -50,12 +50,11 @@ use std::time::Duration;
 use std::{env, fs};
 
 use socket2::cmsg_space;
-use socket2::MsgHdrInit;
-use socket2::PktInfo;
 use socket2::CMSG_LEVEL_IPPROTO_IP;
 use socket2::CMSG_LEVEL_IPPROTO_IPV6;
 use socket2::CMSG_TYPE_IPV6_PKTINFO;
 use socket2::CMSG_TYPE_IP_PKTINFO;
+use socket2::{MsgHdrInit, PktInfoV4, PktInfoV6};
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{GetHandleInformation, HANDLE_FLAG_INHERIT};
 
@@ -791,7 +790,7 @@ fn sent_to_recvmsg_init_v6() {
 
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
-    let mut msg_control = vec![0; cmsg_space(PktInfo::size_v6())];
+    let mut msg_control = vec![0; cmsg_space(PktInfoV6::size())];
     let mut msg = MsgHdrInit::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
@@ -844,7 +843,7 @@ fn sent_to_recvmsg_init_v4() {
 
     let mut buffer = vec![0; data.len()];
     let mut bufs = [IoSliceMut::new(&mut buffer)];
-    let mut msg_control = vec![0; cmsg_space(PktInfo::size_v4())];
+    let mut msg_control = vec![0; cmsg_space(PktInfoV4::size())];
     let mut msg = MsgHdrInit::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
@@ -865,15 +864,18 @@ fn sent_to_recvmsg_init_v4() {
     assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
 
+    let mut pktinfo_found = false;
     for cmsg_hdr in cmsg_vec {
         if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IP
             && cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO
         {
             if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
                 println!("control message: pktinfo: {:?}", ip_pktinfo);
+                pktinfo_found = true;
             }
         }
     }
+    assert!(pktinfo_found);
 }
 
 #[test]

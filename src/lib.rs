@@ -823,7 +823,7 @@ pub(crate) trait MsgHdrOps {
     fn cmsg_next_hdr(&self, cmsg: &sys::cmsghdr) -> *mut sys::cmsghdr;
 }
 
-use std::net::{IpAddr, Ipv6Addr};
+use std::net::Ipv6Addr;
 
 // const CMSG_HEADER_SIZE: usize = mem::size_of::<sys::cmsghdr>();
 // const PKTINFOV4_DATA_SIZE: usize = mem::size_of::<IN_PKTINFO>();
@@ -853,7 +853,7 @@ impl CMsgHdr {
     }
 
     /// Decode this header as IN_PKTINFO
-    pub fn as_pktinfo_v4(&self) -> Option<PktInfo> {
+    pub fn as_pktinfo_v4(&self) -> Option<PktInfoV4> {
         if self.inner.cmsg_level != sys::IPPROTO_IP {
             return None;
         }
@@ -866,21 +866,19 @@ impl CMsgHdr {
         let pktinfo = unsafe { ptr::read_unaligned(data_ptr as *const sys::InPktInfo) };
 
         #[cfg(not(windows))]
-        let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr)));
+        let addr_dst = Ipv4Addr::from(u32::from_be(pktinfo.ipi_addr.s_addr));
 
         #[cfg(windows)]
-        let addr_dst = IpAddr::V4(Ipv4Addr::from(u32::from_be(unsafe {
-            pktinfo.ipi_addr.S_un.S_addr
-        })));
+        let addr_dst = Ipv4Addr::from(u32::from_be(unsafe { pktinfo.ipi_addr.S_un.S_addr }));
 
-        Some(PktInfo {
+        Some(PktInfoV4 {
             if_index: pktinfo.ipi_ifindex as _,
             addr_dst,
         })
     }
 
     /// Decode this header as IN6_PKTINFO
-    pub fn as_recvpktinfo_v6(&self) -> Option<PktInfo> {
+    pub fn as_recvpktinfo_v6(&self) -> Option<PktInfoV6> {
         if self.inner.cmsg_level != sys::IPPROTO_IPV6 {
             return None;
         }
@@ -893,12 +891,12 @@ impl CMsgHdr {
         let pktinfo = unsafe { ptr::read_unaligned(data_ptr as *const sys::In6PktInfo) };
 
         #[cfg(windows)]
-        let addr_dst = IpAddr::V6(Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte }));
+        let addr_dst = Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte });
 
         #[cfg(not(windows))]
-        let addr_dst = IpAddr::V6(Ipv6Addr::from(pktinfo.ipi6_addr.s6_addr));
+        let addr_dst = Ipv6Addr::from(pktinfo.ipi6_addr.s6_addr);
 
-        Some(PktInfo {
+        Some(PktInfoV6 {
             if_index: pktinfo.ipi6_ifindex as _,
             addr_dst,
         })
@@ -932,22 +930,34 @@ const IN6_PKTINFO_SIZE: usize = mem::size_of::<sys::In6PktInfo>();
 
 /// Represents IN_PKTINFO structure.
 #[derive(Debug)]
-pub struct PktInfo {
+pub struct PktInfoV4 {
     /// Interface index
     pub if_index: u64,
 
     /// Header destination address
-    pub addr_dst: IpAddr,
+    pub addr_dst: Ipv4Addr,
 }
 
-impl PktInfo {
+impl PktInfoV4 {
     /// The size in bytes for IPv4 pktinfo
-    pub fn size_v4() -> usize {
+    pub fn size() -> usize {
         IN_PKTINFO_SIZE
     }
+}
 
+/// Represents IN6_PKTINFO structure.
+#[derive(Debug)]
+pub struct PktInfoV6 {
+    /// Interface index
+    pub if_index: u64,
+
+    /// Header destination address
+    pub addr_dst: Ipv6Addr,
+}
+
+impl PktInfoV6 {
     /// The size in bytes for IPv6 pktinfo
-    pub fn size_v6() -> usize {
+    pub fn size() -> usize {
         IN6_PKTINFO_SIZE
     }
 }
