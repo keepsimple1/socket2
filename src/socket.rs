@@ -684,7 +684,10 @@ impl Socket {
         msg: &mut MsgHdrInit,
         _flags: sys::c_int,
     ) -> io::Result<usize> {
-        let wsarecvmsg = self.wsarecvmsg.unwrap();
+        let wsarecvmsg = self.wsarecvmsg.ok_or(io::Error::new(
+            io::ErrorKind::NotFound,
+            "missing WSARECVMSG function",
+        ))?;
         let mut read_bytes = 0;
         let error_code = unsafe {
             (wsarecvmsg)(
