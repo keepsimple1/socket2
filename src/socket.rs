@@ -1707,13 +1707,15 @@ impl Socket {
         }
     }
 
-    /// Set PKTINFO for this socket.
+    /// Set IPv4 PKTINFO for this socket.
+    /// This should be called before the socket binds.
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
         let enable: i32 = 1;
         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, enable) }
     }
 
-    /// Set PKTINFO for this socket.
+    /// Set IPv6 PKTINFO for this socket.
+    /// This should be called before the socket binds.
     pub fn set_recv_pktinfo_v6(&self) -> io::Result<()> {
         #[cfg(not(windows))]
         let optname = sys::IPV6_RECVPKTINFO;
