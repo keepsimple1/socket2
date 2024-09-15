@@ -928,7 +928,7 @@ pub struct PktInfoV4 {
 
 impl PktInfoV4 {
     /// The size in bytes for IPv4 pktinfo
-    pub fn size() -> usize {
+    pub const fn size() -> usize {
         IN_PKTINFO_SIZE
     }
 }
@@ -945,7 +945,7 @@ pub struct PktInfoV6 {
 
 impl PktInfoV6 {
     /// The size in bytes for IPv6 pktinfo
-    pub fn size() -> usize {
+    pub const fn size() -> usize {
         IN6_PKTINFO_SIZE
     }
 }
