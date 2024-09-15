@@ -32,10 +32,6 @@ use windows_sys::Win32::Networking::WinSock::{
 use windows_sys::Win32::System::Threading::INFINITE;
 use windows_sys::Win32::System::IO::OVERLAPPED;
 
-pub(crate) use windows_sys::Win32::Networking::WinSock::{
-    IN6_PKTINFO as In6PktInfo, IN_PKTINFO as InPktInfo, WSABUF,
-};
-
 use crate::{MsgHdr, RecvFlags, SockAddr, TcpKeepalive, Type};
 
 #[allow(non_camel_case_types)]
@@ -61,7 +57,8 @@ pub(crate) const SOCK_SEQPACKET: c_int =
     windows_sys::Win32::Networking::WinSock::SOCK_SEQPACKET as c_int;
 // Used in `Protocol`.
 pub(crate) use windows_sys::Win32::Networking::WinSock::{
-    IPPROTO_ICMP, IPPROTO_ICMPV6, IPPROTO_TCP, IPPROTO_UDP, IPV6_PKTINFO, IP_PKTINFO,
+    CMSGHDR as cmsghdr, IN6_PKTINFO as In6PktInfo, IN_PKTINFO as InPktInfo, IPPROTO_ICMP,
+    IPPROTO_ICMPV6, IPPROTO_TCP, IPPROTO_UDP, IPV6_PKTINFO, IP_PKTINFO, WSABUF,
 };
 // Used in `SockAddr`.
 pub(crate) use windows_sys::Win32::Networking::WinSock::{
@@ -194,9 +191,6 @@ impl<'a> MaybeUninitSlice<'a> {
         unsafe { slice::from_raw_parts_mut(self.vec.buf.cast(), self.vec.len as usize) }
     }
 }
-
-// Used in `CMsgHdr`
-pub(crate) use windows_sys::Win32::Networking::WinSock::CMSGHDR as cmsghdr;
 
 // Used in `MsgHdr`.
 pub(crate) use windows_sys::Win32::Networking::WinSock::WSAMSG as msghdr;
