@@ -737,9 +737,10 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
     }
 }
 
-/// Configuration of a `recvmsg(2)` system call.
+/// Configuration of a `recvmsg(2)` system call with initialized buffers.
 ///
-/// This wraps `msghdr` on Unix and `WSAMSG` on Windows.
+/// This wraps `msghdr` on Unix and `WSAMSG` on Windows and supports
+/// fully initialized buffers.
 #[cfg(not(target_os = "redox"))]
 pub struct MsgHdrInit {
     inner: sys::msghdr,
@@ -756,7 +757,7 @@ impl MsgHdrInit {
         }
     }
 
-    /// Set the mutable address (name) of the message.
+    /// Set the mutable address buffer to store the source address.
     ///
     /// Corresponds to setting `msg_name` and `msg_namelen` on Unix and `name`
     /// and `namelen` on Windows.
@@ -766,12 +767,22 @@ impl MsgHdrInit {
         self
     }
 
-    /// Set the mutable buffer(s) of the message.
+    /// Set the mutable array of buffers for receiving the message.
     ///
     /// Corresponds to setting `msg_iov` and `msg_iovlen` on Unix and `lpBuffers`
     /// and `dwBufferCount` on Windows.
-    pub fn with_buffers(mut self, bufs: &mut [IoSliceMut<'_>]) -> Self {
-        sys::set_msghdr_iov(&mut self.inner, bufs.as_mut_ptr().cast(), bufs.len());
+    ///
+    /// For example: using only a single buffer of 1k bytes:
+    /// ```ignore
+    ///     let mut buffer = vec![0; 1024];
+    ///     let mut buf_list = [IoSliceMut::new(&mut buffer)];
+    /// ```
+    pub fn with_buffers(mut self, buf_list: &mut [IoSliceMut<'_>]) -> Self {
+        sys::set_msghdr_iov(
+            &mut self.inner,
+            buf_list.as_mut_ptr().cast(),
+            buf_list.len(),
+        );
         self
     }
 
@@ -784,24 +795,21 @@ impl MsgHdrInit {
         self
     }
 
-    /// Returns the list of control message headers.
-    pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr> {
+    /// Returns the list of control message headers in the message.
+    ///
+    /// This decodes the control messages inside the ancillary data buffer.
+    pub fn cmsg_hdr_vec(&self) -> Vec<CMsgHdr<'_>> {
         let mut cmsg_vec = Vec::new();
-        // let msg = &self.inner as *const sys::msghdr;
 
-        unsafe {
-            // let mut cmsg: *mut cmsghdr = CMSG_FIRSTHDR(msg);
-            let mut cmsg = self.inner.cmsg_first_hdr();
-            if !cmsg.is_null() {
-                let cmsg_hdr = CMsgHdr { inner: *cmsg };
+        let mut cmsg = self.inner.cmsg_first_hdr();
+        if !cmsg.is_null() {
+            let cmsg_hdr = unsafe { CMsgHdr { inner: &*cmsg } };
+            cmsg_vec.push(cmsg_hdr);
+
+            cmsg = self.inner.cmsg_next_hdr(unsafe { &*cmsg });
+            while !cmsg.is_null() {
+                let cmsg_hdr = unsafe { CMsgHdr { inner: &*cmsg } };
                 cmsg_vec.push(cmsg_hdr);
-
-                // cmsg = CMSG_NXTHDR(msg, cmsg);
-                cmsg = self.inner.cmsg_next_hdr(&*cmsg);
-                while !cmsg.is_null() {
-                    let cmsg_hdr = CMsgHdr { inner: *cmsg };
-                    cmsg_vec.push(cmsg_hdr);
-                }
             }
         }
 
@@ -823,13 +831,13 @@ pub(crate) trait MsgHdrOps {
     fn cmsg_next_hdr(&self, cmsg: &sys::cmsghdr) -> *mut sys::cmsghdr;
 }
 
-/// Reprsents control message in `MsgHdrInit`
+/// Reference of a control message header in the control buffer in `MsgHdrInit`
 #[cfg(not(target_os = "redox"))]
-pub struct CMsgHdr {
-    inner: sys::cmsghdr,
+pub struct CMsgHdr<'a> {
+    inner: &'a sys::cmsghdr,
 }
 
-impl CMsgHdr {
+impl CMsgHdr<'_> {
     /// Get the cmsg level
     pub fn get_level(&self) -> CMsgLevel {
         self.inner.cmsg_level
@@ -903,7 +911,7 @@ pub fn cmsg_space(data_len: usize) -> usize {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl<'a> fmt::Debug for CMsgHdr {
+impl<'a> fmt::Debug for CMsgHdr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
