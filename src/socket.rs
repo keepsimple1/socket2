@@ -686,16 +686,14 @@ impl Socket {
     ) -> io::Result<usize> {
         let wsarecvmsg = self.wsarecvmsg.unwrap();
         let mut read_bytes = 0;
-        let error_code = {
-            unsafe {
-                (wsarecvmsg)(
-                    self.as_raw() as _,
-                    &mut msg.inner,
-                    &mut read_bytes,
-                    std::ptr::null_mut(),
-                    None,
-                )
-            }
+        let error_code = unsafe {
+            (wsarecvmsg)(
+                self.as_raw() as _,
+                &mut msg.inner,
+                &mut read_bytes,
+                std::ptr::null_mut(),
+                None,
+            )
         };
 
         if error_code != 0 {
