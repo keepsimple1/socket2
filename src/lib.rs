@@ -65,7 +65,7 @@ use std::marker::PhantomData;
 #[cfg(not(target_os = "redox"))]
 use std::mem;
 use std::mem::MaybeUninit;
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use std::{fmt, ptr};
@@ -822,18 +822,6 @@ pub(crate) trait MsgHdrOps {
 
     fn cmsg_next_hdr(&self, cmsg: &sys::cmsghdr) -> *mut sys::cmsghdr;
 }
-
-use std::net::Ipv6Addr;
-
-// const CMSG_HEADER_SIZE: usize = mem::size_of::<sys::cmsghdr>();
-// const PKTINFOV4_DATA_SIZE: usize = mem::size_of::<IN_PKTINFO>();
-// const PKTINFOV6_DATA_SIZE: usize = mem::size_of::<IN6_PKTINFO>();
-
-// /// buffer size for IPv4 pktinfo control
-// pub const CONTROL_PKTINFOV4_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV4_DATA_SIZE;
-
-// /// buffer size for IPv6 pktinfo
-// pub const CONTROL_PKTINFOV6_BUFFER_SIZE: usize = CMSG_HEADER_SIZE + PKTINFOV6_DATA_SIZE + 8;
 
 /// Reprsents control message in `MsgHdrInit`
 #[cfg(not(target_os = "redox"))]
