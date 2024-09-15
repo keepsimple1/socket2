@@ -27,9 +27,6 @@ use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
 use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
-#[cfg(windows)]
-use crate::sys::WSARecvMsgExtension;
-
 /// Owned wrapper around a system socket.
 ///
 /// This type simply wraps an instance of a file descriptor (`c_int`) on Unix
@@ -79,7 +76,7 @@ pub struct Socket {
     inner: Inner,
 
     #[cfg(windows)]
-    wsarecvmsg: Option<WSARecvMsgExtension>,
+    wsarecvmsg: Option<sys::WSARecvMsgExtension>,
 }
 
 /// Store a `TcpStream` internally to take advantage of its niche optimizations on Unix platforms.
