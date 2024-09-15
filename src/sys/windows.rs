@@ -743,6 +743,10 @@ pub(crate) type WSARecvMsgExtension = unsafe extern "system" fn(
     lpCompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE,
 ) -> i32;
 
+/// Find the WSARECVMSG function pointer
+//
+// This implementation is copied from:
+// https://github.com/pixsper/socket-pktinfo/blob/3845f44eef707eaa3d34f9d4bc4ebcb6dc9c5959/src/win.rs#L44
 pub(crate) fn locate_wsarecvmsg(socket: Socket) -> io::Result<WSARecvMsgExtension> {
     let mut fn_pointer: usize = 0;
     let mut byte_len: u32 = 0;
