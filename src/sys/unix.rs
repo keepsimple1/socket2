@@ -1147,9 +1147,6 @@ pub(crate) fn _cmsg_space(data_len: usize) -> usize {
     unsafe { CMSG_SPACE(data_len as _) as usize }
 }
 
-pub(crate) const IN_PKTINFO_SIZE: usize = mem::size_of::<InPktInfo>();
-pub(crate) const IN6_PKTINFO_SIZE: usize = mem::size_of::<In6PktInfo>();
-
 pub(crate) fn send(fd: Socket, buf: &[u8], flags: c_int) -> io::Result<usize> {
     syscall!(send(
         fd,

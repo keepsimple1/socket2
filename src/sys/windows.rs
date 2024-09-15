@@ -32,7 +32,9 @@ use windows_sys::Win32::Networking::WinSock::{
 use windows_sys::Win32::System::Threading::INFINITE;
 use windows_sys::Win32::System::IO::OVERLAPPED;
 
-pub(crate) use windows_sys::Win32::Networking::WinSock::WSABUF;
+pub(crate) use windows_sys::Win32::Networking::WinSock::{
+    IN6_PKTINFO as In6PktInfo, IN_PKTINFO as InPktInfo, WSABUF,
+};
 
 use crate::{MsgHdr, RecvFlags, SockAddr, TcpKeepalive, Type};
 
@@ -206,6 +208,11 @@ impl CMsgHdrOps for cmsghdr {
         (self as *const _ as usize + cmsgdata_align(mem::size_of::<Self>())) as *mut u8
     }
 }
+
+pub(crate) fn _cmsg_space(length: usize) -> usize {
+    cmsgdata_align(mem::size_of::<cmsghdr>() + cmsghdr_align(length))
+}
+
 // Helpers functions for `WinSock::WSAMSG` and `WinSock::CMSGHDR` are based on C macros from
 // https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/shared/ws2def.h#L741
 fn cmsghdr_align(length: usize) -> usize {
@@ -216,9 +223,9 @@ fn cmsgdata_align(length: usize) -> usize {
     (length + mem::align_of::<usize>() - 1) & !(mem::align_of::<usize>() - 1)
 }
 
-use crate::CMsgOps;
+use crate::MsgHdrOps;
 
-impl CMsgOps for msghdr {
+impl MsgHdrOps for msghdr {
     fn cmsg_first_hdr(&self) -> *mut cmsghdr {
         if self.Control.len as usize >= mem::size_of::<cmsghdr>() {
             self.Control.buf as *mut cmsghdr

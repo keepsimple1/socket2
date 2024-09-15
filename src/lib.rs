@@ -196,9 +196,6 @@ pub use sockref::SockRef;
 )))]
 pub use socket::InterfaceIndexOrAddress;
 
-#[cfg(windows)]
-use windows_sys::Win32::Networking::WinSock::{IN6_PKTINFO, IN_PKTINFO};
-
 /// Specification of the communication domain for a socket.
 ///
 /// This is a newtype wrapper around an integer which provides a nicer API in
@@ -898,7 +895,9 @@ impl CMsgHdr {
         #[cfg(windows)]
         let addr_dst = IpAddr::V6(Ipv6Addr::from(unsafe { pktinfo.ipi6_addr.u.Byte }));
 
+        #[cfg(not(windows))]
         let addr_dst = IpAddr::V6(Ipv6Addr::from(pktinfo.ipi6_addr.s6_addr));
+
         Some(PktInfo {
             if_index: pktinfo.ipi6_ifindex as _,
             addr_dst,
@@ -928,6 +927,9 @@ impl<'a> fmt::Debug for CMsgHdr {
     }
 }
 
+const IN_PKTINFO_SIZE: usize = mem::size_of::<sys::InPktInfo>();
+const IN6_PKTINFO_SIZE: usize = mem::size_of::<sys::In6PktInfo>();
+
 /// Represents IN_PKTINFO structure.
 #[derive(Debug)]
 pub struct PktInfo {
@@ -941,12 +943,12 @@ pub struct PktInfo {
 impl PktInfo {
     /// The size in bytes for IPv4 pktinfo
     pub fn size_v4() -> usize {
-        sys::IN_PKTINFO_SIZE
+        IN_PKTINFO_SIZE
     }
 
     /// The size in bytes for IPv6 pktinfo
     pub fn size_v6() -> usize {
-        sys::IN6_PKTINFO_SIZE
+        IN6_PKTINFO_SIZE
     }
 }
 
