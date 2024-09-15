@@ -777,10 +777,6 @@ fn sent_to_recvmsg_init_v6() {
     let addr_a = socket_a.local_addr().unwrap();
     let addr_b = socket_b.local_addr().unwrap();
 
-    // Allow recvmsg on this socket.
-    #[cfg(windows)]
-    socket_b.enable_wsarecvmsg().unwrap();
-
     let data = b"sent_to_recvmsg_init";
     let sent = socket_a.send_to(data, &addr_b).unwrap();
     assert_eq!(sent, data.len());
@@ -982,10 +978,6 @@ fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
     let socket_a = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
     let socket_b = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
-
-    // Allow recvmsg on this socket.
-    #[cfg(windows)]
-    socket_b.enable_wsarecvmsg().unwrap();
 
     // Set the socket option before bind.
     socket_b.set_pktinfo_v4().unwrap();
