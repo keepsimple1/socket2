@@ -8,6 +8,13 @@ The following APIs are added in the first version:
 - `recv_from_initialized` to support `recv_from` with a regular initialized buffer.
 - `recvmsg_initialized` to support `recvmsg` with `MsgHdrInit` that has initialized buffers.
 - Also support Windows for `recvmsg_initialized`.
+- `set_pktinfo_v4` and `set_recv_pktinfo_v6` to support IP_PKTINFO and IPV6_PKTINFO socket options.
+
+## Examples
+
+Please see test cases for examples of using the new APIs:
+- Test [`send_to_recv_from_init`](tests/socket.rs#756)
+- Test [`sent_to_recvmsg_init_v4`](tests/socket.rs#824)
 
 ## Base 
 
