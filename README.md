@@ -10,6 +10,8 @@ The following APIs are added in the first version:
 - Also support Windows for `recvmsg_initialized`.
 - `set_pktinfo_v4` and `set_recv_pktinfo_v6` to support IP_PKTINFO and IPV6_PKTINFO socket options.
 
+See [documentation](https://docs.rs/socket2-plus) for more details.
+
 ## Examples
 
 Please see test cases for examples of using the new APIs:
