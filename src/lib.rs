@@ -911,7 +911,7 @@ pub fn cmsg_space(data_len: usize) -> usize {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl<'a> fmt::Debug for CMsgHdr<'_> {
+impl fmt::Debug for CMsgHdr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

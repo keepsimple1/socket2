@@ -1,3 +1,11 @@
+# socket2-plus 0.1.1 
+
+Initial release of `socket2-plus` that is a superset of `socket2`:
+
+- added `recv_from_initialized` to support `recv_from` with regular initialized buffer.
+- added `recvmsg_initialized` to support `recvmsg` with initialized buffers.
+- added `set_pktinfo_v4` and `set_recv_pktinfo_v6` to support IP_PKTINFO and IPV6_PKTINFO socket options.
+
 # 0.5.7
 
 * Added `Socket::(set_)passcred`

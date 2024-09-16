@@ -9,9 +9,8 @@ authors       = [
 license       = "MIT OR Apache-2.0"
 readme        = "README.md"
 repository    = "https://github.com/keepsimple1/socket2-plus"
-description = """
-A superset of socket2 that focuses on safe APIs
-"""
+documentation = "https://docs.rs/socket2-plus"
+description = "A superset of socket2 with additional safe APIs"
 keywords      = ["io", "socket", "network"]
 categories    = ["api-bindings", "network-programming"]
 edition       = "2021"
