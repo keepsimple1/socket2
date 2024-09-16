@@ -23,9 +23,9 @@ use std::time::Duration;
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
-use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
-use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
+use crate::{MaybeUninitSlice, MsgHdr, MsgHdrInit, RecvFlags};
 
 /// Owned wrapper around a system socket.
 ///
