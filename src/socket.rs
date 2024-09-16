@@ -57,7 +57,7 @@ use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 /// ```no_run
 /// # fn main() -> std::io::Result<()> {
 /// use std::net::{SocketAddr, TcpListener};
-/// use socket2::{Socket, Domain, Type};
+/// use socket2_plus::{Socket, Domain, Type};
 ///
 /// // create a TCP listener
 /// let socket = Socket::new(Domain::IPV6, Type::STREAM, None)?;
@@ -2165,7 +2165,7 @@ impl Socket {
     /// ```
     /// use std::time::Duration;
     ///
-    /// use socket2::{Socket, TcpKeepalive, Domain, Type};
+    /// use socket2_plus::{Socket, TcpKeepalive, Domain, Type};
     ///
     /// # fn main() -> std::io::Result<()> {
     /// let socket = Socket::new(Domain::IPV4, Type::STREAM, None)?;

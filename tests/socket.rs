@@ -49,20 +49,19 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
-use socket2::cmsg_space;
-use socket2::CMSG_LEVEL_IPPROTO_IP;
-use socket2::CMSG_LEVEL_IPPROTO_IPV6;
-use socket2::CMSG_TYPE_IPV6_PKTINFO;
-use socket2::CMSG_TYPE_IP_PKTINFO;
-use socket2::{MsgHdrInit, PktInfoV4, PktInfoV6};
+use socket2_plus::{
+    cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IP, CMSG_LEVEL_IPPROTO_IPV6,
+    CMSG_TYPE_IPV6_PKTINFO, CMSG_TYPE_IP_PKTINFO,
+};
+
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{GetHandleInformation, HANDLE_FLAG_INHERIT};
 
 #[cfg(not(any(target_os = "redox", target_os = "vita")))]
-use socket2::MaybeUninitSlice;
+use socket2_plus::MaybeUninitSlice;
 #[cfg(not(target_os = "vita"))]
-use socket2::TcpKeepalive;
-use socket2::{Domain, Protocol, SockAddr, Socket, Type};
+use socket2_plus::TcpKeepalive;
+use socket2_plus::{Domain, Protocol, SockAddr, Socket, Type};
 
 #[test]
 fn domain_for_address() {
@@ -887,7 +886,9 @@ fn sendmsg() {
 
     let bufs = &[IoSlice::new(DATA)];
     let addr_b = socket_b.local_addr().unwrap();
-    let msg = socket2::MsgHdr::new().with_addr(&addr_b).with_buffers(bufs);
+    let msg = socket2_plus::MsgHdr::new()
+        .with_addr(&addr_b)
+        .with_buffers(bufs);
     let sent = socket_a.sendmsg(&msg, 0).unwrap();
     assert_eq!(sent, DATA.len());
 
@@ -1655,7 +1656,7 @@ test!(IPv6 multicast_all_v6, set_multicast_all_v6(false));
 fn join_leave_multicast_v4_n() {
     let socket = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
     let multiaddr = Ipv4Addr::new(224, 0, 1, 1);
-    let interface = socket2::InterfaceIndexOrAddress::Index(0);
+    let interface = socket2_plus::InterfaceIndexOrAddress::Index(0);
     match socket.leave_multicast_v4_n(&multiaddr, &interface) {
         Ok(()) => panic!("leaving an unjoined group should fail"),
         Err(err) => {
