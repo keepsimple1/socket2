@@ -30,7 +30,7 @@ use crate::Socket;
 /// ```
 /// use std::net::{TcpStream, SocketAddr};
 ///
-/// use socket2::SockRef;
+/// use socket2_plus::SockRef;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// // Create `TcpStream` from the standard library.

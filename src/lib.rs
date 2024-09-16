@@ -29,7 +29,7 @@
 //! ```no_run
 //! # fn main() -> std::io::Result<()> {
 //! use std::net::{SocketAddr, TcpListener};
-//! use socket2::{Socket, Domain, Type};
+//! use socket2_plus::{Socket, Domain, Type};
 //!
 //! // Create a TCP listener bound to two addresses.
 //! let socket = Socket::new(Domain::IPV6, Type::STREAM, None)?;

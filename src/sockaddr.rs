@@ -43,7 +43,7 @@ impl SockAddr {
     /// use std::mem;
     /// use std::os::unix::io::AsRawFd;
     ///
-    /// use socket2::{SockAddr, Socket, Domain, Type};
+    /// use socket2_plus::{SockAddr, Socket, Domain, Type};
     ///
     /// let socket = Socket::new(Domain::IPV4, Type::STREAM, None)?;
     ///
@@ -98,7 +98,7 @@ impl SockAddr {
     /// use std::io;
     /// use std::os::unix::io::AsRawFd;
     ///
-    /// use socket2::{SockAddr, Socket, Domain, Type};
+    /// use socket2_plus::{SockAddr, Socket, Domain, Type};
     ///
     /// let socket = Socket::new(Domain::IPV4, Type::STREAM, None)?;
     ///
