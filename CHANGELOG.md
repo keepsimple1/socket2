@@ -1,3 +1,9 @@
+# socket2-plus 0.1.2
+
+Documentation changes only.
+
+* 87e1b76 Update CHNAGELOG and README (#4) (keepsimple1)
+
 # socket2-plus 0.1.1 
 
 Initial release of `socket2-plus` that is a superset of `socket2`:
