@@ -23,9 +23,9 @@ use std::time::Duration;
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
-use crate::{Domain, MsgHdrInit, Protocol, SockAddr, TcpKeepalive, Type};
+use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
-use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
+use crate::{MaybeUninitSlice, MsgHdr, MsgHdrInit, RecvFlags};
 
 /// Owned wrapper around a system socket.
 ///
@@ -557,8 +557,10 @@ impl Socket {
         sys::recv_from(self.as_raw(), buf, flags)
     }
 
-    /// Receives data from the socket with `buf` that is fully initialized.
+    /// Identical to [`recv_from`] but with `buf` that is fully initialized.
     /// On success, returns the number of bytes read and the address from where the data came.
+    ///
+    /// [`recv_from`]: Socket::recv_from
     pub fn recv_from_initialized(&self, buf: &mut [u8]) -> io::Result<(usize, SockAddr)> {
         // Safety: the `recv_from` implementation promises not to write uninitialised
         // bytes to the buffer, so this casting is safe.

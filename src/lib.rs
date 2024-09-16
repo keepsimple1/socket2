@@ -6,6 +6,21 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+//! This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
+//! to provide some features with safe APIs currently missing from `socket2`. As the result, this
+//! library can be used as a drop-in replacement of `socket2`.
+//!
+//! The following are the additional features or APIs:
+//!
+//! - [`socket::Socket::recv_from_initialized`]
+//!
+//! - [`socket::Socket::recvmsg_initialized`]
+//!
+//! - [`socket::Socket::set_pktinfo_v4`]
+//!
+//! - [`socket::Socket::set_recv_pktinfo_v6`]
+//!
+//! ----------------------------------------
 //! Utilities for creating and using sockets.
 //!
 //! The goal of this crate is to create and use a socket using advanced
@@ -962,16 +977,20 @@ impl PktInfoV6 {
 pub type CMsgLevel = i32;
 
 /// constant for cmsg_level of IPPROTO_IP
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_LEVEL_IPPROTO_IP: CMsgLevel = sys::IPPROTO_IP;
 
 /// constant for cmsg_level of IPPROTO_IPV6
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_LEVEL_IPPROTO_IPV6: CMsgLevel = sys::IPPROTO_IPV6;
 
 /// Represents available types of control messages.
 pub type CMsgType = i32;
 
 /// constant for cmsghdr type
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_TYPE_IP_PKTINFO: CMsgType = sys::IP_PKTINFO;
 
 /// constant for cmsghdr type in IPv6
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = sys::IPV6_PKTINFO;

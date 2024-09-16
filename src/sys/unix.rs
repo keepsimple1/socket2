@@ -245,7 +245,7 @@ pub(crate) use libc::{
 ))]
 pub(crate) use libc::{TCP_KEEPCNT, TCP_KEEPINTVL};
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(not(target_os = "redox"))]
 pub(crate) use libc::{
     in6_pktinfo as In6PktInfo, in_pktinfo as InPktInfo, IPV6_PKTINFO, IPV6_RECVPKTINFO, IP_PKTINFO,
 };
@@ -1118,6 +1118,8 @@ pub(crate) fn recvmsg(
 }
 
 use crate::{CMsgHdrOps, MsgHdrInit, MsgHdrOps};
+
+#[cfg(not(target_os = "redox"))]
 use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 #[cfg(not(target_os = "redox"))]
@@ -2376,7 +2378,7 @@ impl crate::Socket {
     /// On Linux:
     ///
     /// ```
-    /// use socket2::{Domain, Socket, Type};
+    /// use socket2_plus::{Domain, Socket, Type};
     /// use std::io::{self, Error, ErrorKind};
     ///
     /// fn enable_freebind(socket: &Socket) -> io::Result<()> {
