@@ -1,6 +1,7 @@
-# Socket2-plus
+# socket2-plus
 
-This is a superset of [`socket2`](https://crates.io/crates/socket2) that aims to provide some additional APIs currently missing from `socket2`. This library can be used by a dropped-in replacement for socket2.
+This is a superset of [`socket2`](https://crates.io/crates/socket2) and it aims to provide some additional APIs currently missing from `socket2`. 
+This library can be used as a dropped-in replacement for `socket2`.
 
 The following APIs are added in the first version:
 
@@ -8,13 +9,15 @@ The following APIs are added in the first version:
 - `recvmsg_initialized` to support `recvmsg` with `MsgHdrInit` that has initialized buffers.
 - Also support Windows for `recvmsg_initialized`.
 
-This first version is forked from `socket2` v0.5.7. We plan to rebase to the latest `socket2` stable release regularly.
+## Base 
 
-# Minimum Supported Rust Version (MSRV)
+This version is forked from `socket2` v0.5.7. We plan to rebase to the latest `socket2` stable release regularly.
+
+## Minimum Supported Rust Version (MSRV)
 
 Socket2 uses 1.63.0 as MSRV.
 
-# License
+## License
 
 This project is licensed under either of
 
@@ -25,7 +28,7 @@ This project is licensed under either of
 
 at your option.
 
-### Contribution
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this project by you, as defined in the Apache-2.0 license,
