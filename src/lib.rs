@@ -977,16 +977,20 @@ impl PktInfoV6 {
 pub type CMsgLevel = i32;
 
 /// constant for cmsg_level of IPPROTO_IP
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_LEVEL_IPPROTO_IP: CMsgLevel = sys::IPPROTO_IP;
 
 /// constant for cmsg_level of IPPROTO_IPV6
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_LEVEL_IPPROTO_IPV6: CMsgLevel = sys::IPPROTO_IPV6;
 
 /// Represents available types of control messages.
 pub type CMsgType = i32;
 
 /// constant for cmsghdr type
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_TYPE_IP_PKTINFO: CMsgType = sys::IP_PKTINFO;
 
 /// constant for cmsghdr type in IPv6
+#[cfg(not(target_os = "redox"))]
 pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = sys::IPV6_PKTINFO;
