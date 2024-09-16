@@ -1,3 +1,9 @@
+# socket2-plus 0.1.3
+
+Trying to fix cargo doc build on crates.io
+
+* ec12abd Trying to fix cargo doc build error on crates.io (#6) (keepsimple1)
+
 # socket2-plus 0.1.2
 
 Documentation changes only.
