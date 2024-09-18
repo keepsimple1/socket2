@@ -1,3 +1,11 @@
+# socket2-plus 0.2.0
+
+Breaking changes:
+
+* e827b51 Add missing lifetimes in MsgHdrInit (#8) (keepsimple1)
+
+Although the calling code most likely don't need to change, I think added lifetimes are considered breaking changes.
+
 # socket2-plus 0.1.3
 
 Trying to fix cargo doc build on crates.io
