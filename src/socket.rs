@@ -673,7 +673,7 @@ impl Socket {
     #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
     pub fn recvmsg_initialized(
         &self,
-        msg: &mut MsgHdrInit,
+        msg: &mut MsgHdrInit<'_, '_>,
         flags: sys::c_int,
     ) -> io::Result<usize> {
         sys::recvmsg_init(self.as_raw(), msg, flags)

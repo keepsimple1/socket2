@@ -757,18 +757,20 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows and supports
 /// fully initialized buffers.
 #[cfg(not(target_os = "redox"))]
-pub struct MsgHdrInit {
+pub struct MsgHdrInit<'addr, 'bufs> {
     inner: sys::msghdr,
+    _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>])>,
 }
 
 #[cfg(not(target_os = "redox"))]
-impl MsgHdrInit {
+impl<'addr, 'bufs> MsgHdrInit<'addr, 'bufs> {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> MsgHdrInit {
+    pub fn new() -> MsgHdrInit<'addr, 'bufs> {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
         MsgHdrInit {
             inner: unsafe { mem::zeroed() },
+            _lifetimes: PhantomData,
         }
     }
 
@@ -777,7 +779,7 @@ impl MsgHdrInit {
     /// Corresponds to setting `msg_name` and `msg_namelen` on Unix and `name`
     /// and `namelen` on Windows.
     #[allow(clippy::needless_pass_by_ref_mut)]
-    pub fn with_addr(mut self, addr: &mut SockAddr) -> Self {
+    pub fn with_addr(mut self, addr: &'addr mut SockAddr) -> Self {
         sys::set_msghdr_name(&mut self.inner, addr);
         self
     }
@@ -792,7 +794,7 @@ impl MsgHdrInit {
     ///     let mut buffer = vec![0; 1024];
     ///     let mut buf_list = [IoSliceMut::new(&mut buffer)];
     /// ```
-    pub fn with_buffers(mut self, buf_list: &mut [IoSliceMut<'_>]) -> Self {
+    pub fn with_buffers(mut self, buf_list: &'bufs mut [IoSliceMut<'_>]) -> Self {
         sys::set_msghdr_iov(
             &mut self.inner,
             buf_list.as_mut_ptr().cast(),
@@ -833,7 +835,7 @@ impl MsgHdrInit {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl fmt::Debug for MsgHdrInit {
+impl fmt::Debug for MsgHdrInit<'_, '_> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
     }

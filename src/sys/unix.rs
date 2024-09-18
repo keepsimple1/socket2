@@ -1123,7 +1123,11 @@ use crate::{CMsgHdrOps, MsgHdrInit, MsgHdrOps};
 use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
 #[cfg(not(target_os = "redox"))]
-pub(crate) fn recvmsg_init(fd: Socket, msg: &mut MsgHdrInit, flags: c_int) -> io::Result<usize> {
+pub(crate) fn recvmsg_init(
+    fd: Socket,
+    msg: &mut MsgHdrInit<'_, '_>,
+    flags: c_int,
+) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 

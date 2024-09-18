@@ -798,10 +798,6 @@ fn sent_to_recvmsg_init_v6() {
     socket_b.set_recv_pktinfo_v6().unwrap();
     let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
-    assert_eq!(received, data.len());
-    assert_eq!(sockaddr, addr_a);
-    assert_eq!(buffer, data);
-
     let cmsg_vec = msg.cmsg_hdr_vec();
     assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
@@ -818,6 +814,10 @@ fn sent_to_recvmsg_init_v6() {
         }
     }
     assert!(pktinfo_found);
+
+    assert_eq!(received, data.len());
+    assert_eq!(sockaddr, addr_a);
+    assert_eq!(buffer, data);
 }
 
 #[test]
@@ -851,13 +851,6 @@ fn sent_to_recvmsg_init_v4() {
     // Receive a mesage.
     let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
-    // Verify the data received.
-    assert_eq!(received, data.len());
-    assert_eq!(buffer, data);
-
-    // Verify the source address.
-    assert_eq!(sockaddr, addr_a);
-
     // Verify the control message and the address that received the packet.
     let cmsg_vec = msg.cmsg_hdr_vec();
     assert!(!cmsg_vec.is_empty());
@@ -875,6 +868,13 @@ fn sent_to_recvmsg_init_v4() {
         }
     }
     assert!(pktinfo_found);
+
+    // Verify the data received.
+    assert_eq!(received, data.len());
+    assert_eq!(buffer, data);
+
+    // Verify the source address.
+    assert_eq!(sockaddr, addr_a);
 }
 
 #[test]
