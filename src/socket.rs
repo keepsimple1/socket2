@@ -669,8 +669,7 @@ impl Socket {
     }
 
     /// Receive a message from a socket using a message structure that is fully initialized.
-    #[cfg(all(unix, not(target_os = "redox")))]
-    #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     pub fn recvmsg_initialized(
         &self,
         msg: &mut MsgHdrInit<'_, '_, '_>,
