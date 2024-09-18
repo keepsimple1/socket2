@@ -673,13 +673,13 @@ impl Socket {
     #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
     pub fn recvmsg_initialized(
         &self,
-        msg: &mut MsgHdrInit<'_, '_>,
+        msg: &mut MsgHdrInit<'_, '_, '_>,
         flags: sys::c_int,
     ) -> io::Result<usize> {
         sys::recvmsg_init(self.as_raw(), msg, flags)
     }
 
-    /// Recvmsg with initialized buffers
+    /// Receive a message from a socket using a message structure that is fully initialized.
     #[cfg(windows)]
     pub fn recvmsg_initialized(
         &self,

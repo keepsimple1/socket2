@@ -756,17 +756,19 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 ///
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows and supports
 /// fully initialized buffers.
+///
+/// For the control messages, please use [MsgHdrInit::cmsg_hdr_vec] to retrieve.
 #[cfg(not(target_os = "redox"))]
-pub struct MsgHdrInit<'addr, 'bufs> {
+pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     inner: sys::msghdr,
-    _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>])>,
+    _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>], &'control [u8])>,
 }
 
 #[cfg(not(target_os = "redox"))]
-impl<'addr, 'bufs> MsgHdrInit<'addr, 'bufs> {
+impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> MsgHdrInit<'addr, 'bufs> {
+    pub fn new() -> MsgHdrInit<'addr, 'bufs, 'control> {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
         MsgHdrInit {
             inner: unsafe { mem::zeroed() },
@@ -788,12 +790,6 @@ impl<'addr, 'bufs> MsgHdrInit<'addr, 'bufs> {
     ///
     /// Corresponds to setting `msg_iov` and `msg_iovlen` on Unix and `lpBuffers`
     /// and `dwBufferCount` on Windows.
-    ///
-    /// For example: using only a single buffer of 1k bytes:
-    /// ```ignore
-    ///     let mut buffer = vec![0; 1024];
-    ///     let mut buf_list = [IoSliceMut::new(&mut buffer)];
-    /// ```
     pub fn with_buffers(mut self, buf_list: &'bufs mut [IoSliceMut<'_>]) -> Self {
         sys::set_msghdr_iov(
             &mut self.inner,
@@ -807,7 +803,7 @@ impl<'addr, 'bufs> MsgHdrInit<'addr, 'bufs> {
     ///
     /// Corresponds to setting `msg_control` and `msg_controllen` on Unix and
     /// `Control` on Windows.
-    pub fn with_control(mut self, buf: &mut [u8]) -> Self {
+    pub fn with_control(mut self, buf: &'control mut [u8]) -> Self {
         sys::set_msghdr_control(&mut self.inner, buf.as_mut_ptr().cast(), buf.len());
         self
     }
@@ -835,7 +831,7 @@ impl<'addr, 'bufs> MsgHdrInit<'addr, 'bufs> {
 }
 
 #[cfg(not(target_os = "redox"))]
-impl fmt::Debug for MsgHdrInit<'_, '_> {
+impl fmt::Debug for MsgHdrInit<'_, '_, '_> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
     }
@@ -923,7 +919,7 @@ pub(crate) trait CMsgHdrOps {
 
 /// Given a payload of `data_len`, returns the number of bytes a control message occupies.
 /// i.e. it includes the header, the data and the alignments.
-pub fn cmsg_space(data_len: usize) -> usize {
+pub const fn cmsg_space(data_len: usize) -> usize {
     sys::_cmsg_space(data_len)
 }
 

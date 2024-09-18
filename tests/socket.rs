@@ -50,8 +50,7 @@ use std::time::Duration;
 use std::{env, fs};
 
 use socket2_plus::{
-    cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IP, CMSG_LEVEL_IPPROTO_IPV6,
-    CMSG_TYPE_IPV6_PKTINFO, CMSG_TYPE_IP_PKTINFO,
+    cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IPV6, CMSG_TYPE_IPV6_PKTINFO,
 };
 
 #[cfg(windows)]
@@ -840,7 +839,7 @@ fn sent_to_recvmsg_init_v4() {
         SockAddr::from(ipv6addr)
     };
 
-    let mut buffer = vec![0; data.len()];
+    let mut buffer = vec![0; data.len() * 2]; // provide a bigger buffer than the expected data
     let mut bufs = [IoSliceMut::new(&mut buffer)];
     let mut msg_control = vec![0; cmsg_space(PktInfoV4::size())];
     let mut msg = MsgHdrInit::new()
@@ -852,29 +851,40 @@ fn sent_to_recvmsg_init_v4() {
     let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
     // Verify the control message and the address that received the packet.
-    let cmsg_vec = msg.cmsg_hdr_vec();
-    assert!(!cmsg_vec.is_empty());
-    println!("cmsg vec: {:?}", cmsg_vec);
-
-    let mut pktinfo_found = false;
-    for cmsg_hdr in cmsg_vec {
-        if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IP
-            && cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO
-        {
-            if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
-                println!("control message: pktinfo: {:?}", ip_pktinfo);
-                pktinfo_found = true;
-            }
-        }
-    }
-    assert!(pktinfo_found);
+    let ip_pktinfo: Vec<_> = msg
+        .cmsg_hdr_vec()
+        .iter()
+        .filter_map(|cmsg| cmsg.as_pktinfo_v4())
+        .collect();
+    assert!(!ip_pktinfo.is_empty());
+    println!("IP PKTINFO: {:?}", ip_pktinfo);
 
     // Verify the data received.
     assert_eq!(received, data.len());
-    assert_eq!(buffer, data);
+    let all_data = collect_io_slices(&bufs, received);
+    assert_eq!(all_data, data);
 
     // Verify the source address.
+    assert!(sockaddr.is_ipv4());
+    println!("source addr: {:?}", sockaddr);
     assert_eq!(sockaddr, addr_a);
+}
+
+/// Collect (copy) data from array of `IoSliceMut` into a single Vec.
+fn collect_io_slices(slices: &[IoSliceMut], total: usize) -> Vec<u8> {
+    let mut collected = Vec::with_capacity(total);
+    let mut remaining = total;
+
+    for buf in slices {
+        let to_take = remaining.min(buf.len());
+        collected.extend_from_slice(&buf[..to_take]);
+        remaining -= to_take;
+        if remaining == 0 {
+            break;
+        }
+    }
+
+    collected
 }
 
 #[test]

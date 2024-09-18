@@ -1125,7 +1125,7 @@ use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 #[cfg(not(target_os = "redox"))]
 pub(crate) fn recvmsg_init(
     fd: Socket,
-    msg: &mut MsgHdrInit<'_, '_>,
+    msg: &mut MsgHdrInit<'_, '_, '_>,
     flags: c_int,
 ) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
@@ -1149,7 +1149,7 @@ impl CMsgHdrOps for cmsghdr {
 
 /// Given a payload of `data_len`, returns the number of bytes a control message occupies.
 /// i.e. it includes the header, the data and the alignments.
-pub(crate) fn _cmsg_space(data_len: usize) -> usize {
+pub(crate) const fn _cmsg_space(data_len: usize) -> usize {
     unsafe { CMSG_SPACE(data_len as _) as usize }
 }
 
