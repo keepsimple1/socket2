@@ -75,7 +75,15 @@
 
 use std::fmt;
 #[cfg(not(target_os = "redox"))]
-use std::io::{IoSlice, IoSliceMut};
+use std::io::IoSlice;
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use std::io::IoSliceMut;
 #[cfg(not(target_os = "redox"))]
 use std::marker::PhantomData;
 #[cfg(not(target_os = "redox"))]
@@ -864,6 +872,13 @@ impl fmt::Debug for MsgHdrInit<'_, '_, '_> {
 }
 
 /// Common operations supported on `msghdr`
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) trait MsgHdrOps {
     fn cmsg_first_hdr(&self) -> *mut sys::cmsghdr;
 
@@ -951,6 +966,13 @@ impl CMsgHdr<'_> {
     }
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) trait CMsgHdrOps {
     /// Returns a pointer to the data portion of a cmsghdr.
     fn cmsg_data(&self) -> *mut u8;

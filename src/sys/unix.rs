@@ -722,7 +722,13 @@ pub(crate) fn unix_sockaddr(path: &Path) -> io::Result<SockAddr> {
 #[cfg(not(target_os = "redox"))]
 pub(crate) use libc::msghdr;
 
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) use libc::cmsghdr;
 
 #[cfg(not(target_os = "redox"))]

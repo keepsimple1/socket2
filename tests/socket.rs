@@ -15,6 +15,13 @@ use std::fs::File;
 use std::io;
 #[cfg(not(any(target_os = "redox", target_os = "vita")))]
 use std::io::IoSlice;
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use std::io::IoSliceMut;
 use std::io::Read;
 use std::io::Write;
@@ -49,6 +56,13 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use socket2_plus::{
     cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IPV6, CMSG_TYPE_IPV6_PKTINFO,
 };
@@ -769,6 +783,13 @@ fn send_to_recv_from_init() {
 }
 
 #[test]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn sent_to_recvmsg_init_v6() {
     let (socket_a, socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
@@ -820,6 +841,13 @@ fn sent_to_recvmsg_init_v6() {
 }
 
 #[test]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn sent_to_recvmsg_init_v4() {
     let (socket_a, socket_b) = udp_pair_unconnected_v4();
     let addr_a = socket_a.local_addr().unwrap();
@@ -871,6 +899,13 @@ fn sent_to_recvmsg_init_v4() {
 }
 
 /// Collect (copy) data from array of `IoSliceMut` into a single Vec.
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn collect_io_slices(slices: &[IoSliceMut], total: usize) -> Vec<u8> {
     let mut collected = Vec::with_capacity(total);
     let mut remaining = total;
@@ -962,6 +997,13 @@ fn udp_pair_unconnected() -> (Socket, Socket) {
     let socket_b = Socket::new(Domain::IPV6, Type::DGRAM, None).unwrap();
 
     // Set the socket option before bind.
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     socket_b.set_recv_pktinfo_v6().unwrap();
 
     socket_a.bind(&unspecified_addr.into()).unwrap();
@@ -985,7 +1027,13 @@ fn udp_pair_unconnected() -> (Socket, Socket) {
 }
 
 /// Create a pair of non-connected UDP sockets suitable for unit tests.
-#[cfg(not(any(target_os = "redox", target_os = "vita")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     // Use ephemeral ports assigned by the OS.
     let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
