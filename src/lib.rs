@@ -758,13 +758,25 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 /// fully initialized buffers.
 ///
 /// For the control messages, please use [MsgHdrInit::cmsg_hdr_vec] to retrieve.
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     inner: sys::msghdr,
     _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>], &'control [u8])>,
 }
 
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
@@ -830,7 +842,13 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
     }
 }
 
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl fmt::Debug for MsgHdrInit<'_, '_, '_> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
@@ -845,7 +863,13 @@ pub(crate) trait MsgHdrOps {
 }
 
 /// Reference of a control message header in the control buffer in `MsgHdrInit`
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub struct CMsgHdr<'a> {
     inner: &'a sys::cmsghdr,
 }
@@ -919,12 +943,24 @@ pub(crate) trait CMsgHdrOps {
 
 /// Given a payload of `data_len`, returns the number of bytes a control message occupies.
 /// i.e. it includes the header, the data and the alignments.
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const fn cmsg_space(data_len: usize) -> usize {
     sys::_cmsg_space(data_len)
 }
 
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl fmt::Debug for CMsgHdr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -976,20 +1012,44 @@ impl PktInfoV6 {
 pub type CMsgLevel = i32;
 
 /// constant for cmsg_level of IPPROTO_IP
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_LEVEL_IPPROTO_IP: CMsgLevel = sys::IPPROTO_IP;
 
 /// constant for cmsg_level of IPPROTO_IPV6
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_LEVEL_IPPROTO_IPV6: CMsgLevel = sys::IPPROTO_IPV6;
 
 /// Represents available types of control messages.
 pub type CMsgType = i32;
 
 /// constant for cmsghdr type
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_TYPE_IP_PKTINFO: CMsgType = sys::IP_PKTINFO;
 
 /// constant for cmsghdr type in IPv6
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = sys::IPV6_PKTINFO;

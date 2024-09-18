@@ -245,7 +245,13 @@ pub(crate) use libc::{
 ))]
 pub(crate) use libc::{TCP_KEEPCNT, TCP_KEEPINTVL};
 
-#[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) use libc::{
     in6_pktinfo as In6PktInfo, in_pktinfo as InPktInfo, IPV6_PKTINFO, IPV6_RECVPKTINFO, IP_PKTINFO,
 };

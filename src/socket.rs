@@ -21,11 +21,19 @@ use std::os::windows::io::{FromRawSocket, IntoRawSocket};
 use std::time::Duration;
 
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use crate::MsgHdrInit;
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
 use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
-use crate::{MaybeUninitSlice, MsgHdr, MsgHdrInit, RecvFlags};
+use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
 /// Owned wrapper around a system socket.
 ///
