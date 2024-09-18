@@ -73,6 +73,7 @@
 // Disallow warnings in examples.
 #![doc(test(attr(deny(warnings))))]
 
+use std::fmt;
 #[cfg(not(target_os = "redox"))]
 use std::io::{IoSlice, IoSliceMut};
 #[cfg(not(target_os = "redox"))]
@@ -82,8 +83,15 @@ use std::mem;
 use std::mem::MaybeUninit;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::ops::{Deref, DerefMut};
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use std::ptr;
 use std::time::Duration;
-use std::{fmt, ptr};
 
 /// Macro to implement `fmt::Debug` for a type, printing the constant names
 /// rather than a number.
@@ -978,7 +986,21 @@ impl fmt::Debug for CMsgHdr<'_> {
     }
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 const IN_PKTINFO_SIZE: usize = mem::size_of::<sys::InPktInfo>();
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 const IN6_PKTINFO_SIZE: usize = mem::size_of::<sys::In6PktInfo>();
 
 /// Represents IN_PKTINFO structure.
@@ -993,6 +1015,13 @@ pub struct PktInfoV4 {
 
 impl PktInfoV4 {
     /// The size in bytes for IPv4 pktinfo
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub const fn size() -> usize {
         IN_PKTINFO_SIZE
     }
@@ -1010,6 +1039,13 @@ pub struct PktInfoV6 {
 
 impl PktInfoV6 {
     /// The size in bytes for IPv6 pktinfo
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub const fn size() -> usize {
         IN6_PKTINFO_SIZE
     }
