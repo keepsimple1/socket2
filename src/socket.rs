@@ -683,6 +683,7 @@ impl Socket {
         target_os = "hurd",
         target_os = "redox",
         target_os = "vita",
+        target_os = "windows",
     )))]
     pub fn recvmsg_initialized(
         &self,
@@ -696,7 +697,7 @@ impl Socket {
     #[cfg(windows)]
     pub fn recvmsg_initialized(
         &self,
-        msg: &mut MsgHdrInit,
+        msg: &mut MsgHdrInit<'_, '_, '_>,
         _flags: sys::c_int,
     ) -> io::Result<usize> {
         let wsarecvmsg = self.wsarecvmsg.ok_or(io::Error::new(
