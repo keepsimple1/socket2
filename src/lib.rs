@@ -6,20 +6,30 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
-//! to provide some features with safe APIs currently missing from `socket2`. As the result, this
-//! library can be used as a drop-in replacement of `socket2`.
-//!
-//! The following are the additional features or APIs:
-//!
-//! - [`socket::Socket::recv_from_initialized`]
-//!
-//! - [`socket::Socket::recvmsg_initialized`]
-//!
-//! - [`socket::Socket::set_pktinfo_v4`]
-//!
-//! - [`socket::Socket::set_recv_pktinfo_v6`]
-//!
+#![cfg_attr(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)), doc = r#"
+This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
+to provide some features with safe APIs currently missing from `socket2`. As the result, this
+library can be used as a drop-in replacement of `socket2`.
+
+The following are the additional features or APIs:
+
+- [`socket::Socket::recv_from_initialized`]
+
+- [`socket::Socket::recvmsg_initialized`]
+
+- [`socket::Socket::set_pktinfo_v4`]
+
+- [`socket::Socket::set_recv_pktinfo_v6`]
+
+- [`CMsgHdr`] : support Control Messages.
+
+"#)]
 //! ----------------------------------------
 //! Utilities for creating and using sockets.
 //!
