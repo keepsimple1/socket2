@@ -766,6 +766,7 @@ fn send_from_recv_to_vectored() {
 }
 
 #[test]
+#[cfg(not(any(target_os = "redox", target_os = "vita")))]
 fn send_to_recv_from_init() {
     let (socket_a, socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
