@@ -1123,12 +1123,31 @@ pub(crate) fn recvmsg(
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use crate::{CMsgHdrOps, MsgHdrInit, MsgHdrOps};
 
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use libc::{CMSG_DATA, CMSG_FIRSTHDR, CMSG_NXTHDR, CMSG_SPACE};
 
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) fn recvmsg_init(
     fd: Socket,
     msg: &mut MsgHdrInit<'_, '_, '_>,
@@ -1137,6 +1156,13 @@ pub(crate) fn recvmsg_init(
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl MsgHdrOps for msghdr {
     fn cmsg_first_hdr(&self) -> *mut cmsghdr {
         unsafe { CMSG_FIRSTHDR(self) }
@@ -1147,6 +1173,13 @@ impl MsgHdrOps for msghdr {
     }
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl CMsgHdrOps for cmsghdr {
     fn cmsg_data(&self) -> *mut u8 {
         unsafe { CMSG_DATA(self) }
@@ -1155,6 +1188,13 @@ impl CMsgHdrOps for cmsghdr {
 
 /// Given a payload of `data_len`, returns the number of bytes a control message occupies.
 /// i.e. it includes the header, the data and the alignments.
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) const fn _cmsg_space(data_len: usize) -> usize {
     unsafe { CMSG_SPACE(data_len as _) as usize }
 }
