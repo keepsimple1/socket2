@@ -677,7 +677,13 @@ impl Socket {
     }
 
     /// Receive a message from a socket using a message structure that is fully initialized.
-    #[cfg(not(any(target_os = "fuchsia", target_os = "redox")))]
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub fn recvmsg_initialized(
         &self,
         msg: &mut MsgHdrInit<'_, '_, '_>,
@@ -1719,7 +1725,13 @@ impl Socket {
 
     /// Set IPv4 PKTINFO for this socket.
     /// This should be called before the socket binds.
-    #[cfg(not(any(target_os = "fuchsia", target_os = "redox",)))]
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]  
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
         let enable: i32 = 1;
         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, enable) }
@@ -1727,7 +1739,13 @@ impl Socket {
 
     /// Set IPv6 PKTINFO for this socket.
     /// This should be called before the socket binds.
-    #[cfg(not(any(target_os = "fuchsia", target_os = "redox",)))]
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]    
     pub fn set_recv_pktinfo_v6(&self) -> io::Result<()> {
         #[cfg(not(windows))]
         let optname = sys::IPV6_RECVPKTINFO;
