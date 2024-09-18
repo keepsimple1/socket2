@@ -203,17 +203,17 @@ impl CMsgHdrOps for cmsghdr {
     }
 }
 
-pub(crate) fn _cmsg_space(length: usize) -> usize {
+pub(crate) const fn _cmsg_space(length: usize) -> usize {
     cmsgdata_align(mem::size_of::<cmsghdr>() + cmsghdr_align(length))
 }
 
 // Helpers functions for `WinSock::WSAMSG` and `WinSock::CMSGHDR` are based on C macros from
 // https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/shared/ws2def.h#L741
-fn cmsghdr_align(length: usize) -> usize {
+const fn cmsghdr_align(length: usize) -> usize {
     (length + mem::align_of::<cmsghdr>() - 1) & !(mem::align_of::<cmsghdr>() - 1)
 }
 
-fn cmsgdata_align(length: usize) -> usize {
+const fn cmsgdata_align(length: usize) -> usize {
     (length + mem::align_of::<usize>() - 1) & !(mem::align_of::<usize>() - 1)
 }
 

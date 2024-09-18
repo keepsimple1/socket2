@@ -21,11 +21,19 @@ use std::os::windows::io::{FromRawSocket, IntoRawSocket};
 use std::time::Duration;
 
 use crate::sys::{self, c_int, getsockopt, setsockopt, Bool};
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use crate::MsgHdrInit;
 #[cfg(all(unix, not(target_os = "redox")))]
 use crate::MsgHdrMut;
 use crate::{Domain, Protocol, SockAddr, TcpKeepalive, Type};
 #[cfg(not(target_os = "redox"))]
-use crate::{MaybeUninitSlice, MsgHdr, MsgHdrInit, RecvFlags};
+use crate::{MaybeUninitSlice, MsgHdr, RecvFlags};
 
 /// Owned wrapper around a system socket.
 ///
@@ -669,21 +677,27 @@ impl Socket {
     }
 
     /// Receive a message from a socket using a message structure that is fully initialized.
-    #[cfg(all(unix, not(target_os = "redox")))]
-    #[cfg_attr(docsrs, doc(cfg(all(unix, not(target_os = "redox")))))]
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+        target_os = "windows",
+    )))]
     pub fn recvmsg_initialized(
         &self,
-        msg: &mut MsgHdrInit,
+        msg: &mut MsgHdrInit<'_, '_, '_>,
         flags: sys::c_int,
     ) -> io::Result<usize> {
         sys::recvmsg_init(self.as_raw(), msg, flags)
     }
 
-    /// Recvmsg with initialized buffers
+    /// Receive a message from a socket using a message structure that is fully initialized.
     #[cfg(windows)]
     pub fn recvmsg_initialized(
         &self,
-        msg: &mut MsgHdrInit,
+        msg: &mut MsgHdrInit<'_, '_, '_>,
         _flags: sys::c_int,
     ) -> io::Result<usize> {
         let wsarecvmsg = self.wsarecvmsg.ok_or(io::Error::new(
@@ -1712,6 +1726,13 @@ impl Socket {
 
     /// Set IPv4 PKTINFO for this socket.
     /// This should be called before the socket binds.
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub fn set_pktinfo_v4(&self) -> io::Result<()> {
         let enable: i32 = 1;
         unsafe { setsockopt(self.as_raw(), sys::IPPROTO_IP, sys::IP_PKTINFO, enable) }
@@ -1719,6 +1740,13 @@ impl Socket {
 
     /// Set IPv6 PKTINFO for this socket.
     /// This should be called before the socket binds.
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub fn set_recv_pktinfo_v6(&self) -> io::Result<()> {
         #[cfg(not(windows))]
         let optname = sys::IPV6_RECVPKTINFO;

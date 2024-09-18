@@ -15,6 +15,13 @@ use std::fs::File;
 use std::io;
 #[cfg(not(any(target_os = "redox", target_os = "vita")))]
 use std::io::IoSlice;
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use std::io::IoSliceMut;
 use std::io::Read;
 use std::io::Write;
@@ -49,9 +56,15 @@ use std::thread;
 use std::time::Duration;
 use std::{env, fs};
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 use socket2_plus::{
-    cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IP, CMSG_LEVEL_IPPROTO_IPV6,
-    CMSG_TYPE_IPV6_PKTINFO, CMSG_TYPE_IP_PKTINFO,
+    cmsg_space, MsgHdrInit, PktInfoV4, PktInfoV6, CMSG_LEVEL_IPPROTO_IPV6, CMSG_TYPE_IPV6_PKTINFO,
 };
 
 #[cfg(windows)]
@@ -753,6 +766,7 @@ fn send_from_recv_to_vectored() {
 }
 
 #[test]
+#[cfg(not(any(target_os = "redox", target_os = "vita")))]
 fn send_to_recv_from_init() {
     let (socket_a, socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
@@ -770,6 +784,13 @@ fn send_to_recv_from_init() {
 }
 
 #[test]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn sent_to_recvmsg_init_v6() {
     let (socket_a, socket_b) = udp_pair_unconnected();
     let addr_a = socket_a.local_addr().unwrap();
@@ -798,10 +819,6 @@ fn sent_to_recvmsg_init_v6() {
     socket_b.set_recv_pktinfo_v6().unwrap();
     let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
-    assert_eq!(received, data.len());
-    assert_eq!(sockaddr, addr_a);
-    assert_eq!(buffer, data);
-
     let cmsg_vec = msg.cmsg_hdr_vec();
     assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
@@ -818,9 +835,20 @@ fn sent_to_recvmsg_init_v6() {
         }
     }
     assert!(pktinfo_found);
+
+    assert_eq!(received, data.len());
+    assert_eq!(sockaddr, addr_a);
+    assert_eq!(buffer, data);
 }
 
 #[test]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn sent_to_recvmsg_init_v4() {
     let (socket_a, socket_b) = udp_pair_unconnected_v4();
     let addr_a = socket_a.local_addr().unwrap();
@@ -840,7 +868,7 @@ fn sent_to_recvmsg_init_v4() {
         SockAddr::from(ipv6addr)
     };
 
-    let mut buffer = vec![0; data.len()];
+    let mut buffer = vec![0; data.len() * 2]; // provide a bigger buffer than the expected data
     let mut bufs = [IoSliceMut::new(&mut buffer)];
     let mut msg_control = vec![0; cmsg_space(PktInfoV4::size())];
     let mut msg = MsgHdrInit::new()
@@ -851,30 +879,48 @@ fn sent_to_recvmsg_init_v4() {
     // Receive a mesage.
     let received = socket_b.recvmsg_initialized(&mut msg, 0).unwrap();
 
+    // Verify the control message and the address that received the packet.
+    let ip_pktinfo: Vec<_> = msg
+        .cmsg_hdr_vec()
+        .iter()
+        .filter_map(|cmsg| cmsg.as_pktinfo_v4())
+        .collect();
+    assert!(!ip_pktinfo.is_empty());
+    println!("IP PKTINFO: {:?}", ip_pktinfo);
+
     // Verify the data received.
     assert_eq!(received, data.len());
-    assert_eq!(buffer, data);
+    let all_data = collect_io_slices(&bufs, received);
+    assert_eq!(all_data, data);
 
     // Verify the source address.
+    assert!(sockaddr.is_ipv4());
+    println!("source addr: {:?}", sockaddr);
     assert_eq!(sockaddr, addr_a);
+}
 
-    // Verify the control message and the address that received the packet.
-    let cmsg_vec = msg.cmsg_hdr_vec();
-    assert!(!cmsg_vec.is_empty());
-    println!("cmsg vec: {:?}", cmsg_vec);
+/// Collect (copy) data from array of `IoSliceMut` into a single Vec.
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+fn collect_io_slices(slices: &[IoSliceMut], total: usize) -> Vec<u8> {
+    let mut collected = Vec::with_capacity(total);
+    let mut remaining = total;
 
-    let mut pktinfo_found = false;
-    for cmsg_hdr in cmsg_vec {
-        if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IP
-            && cmsg_hdr.get_type() == CMSG_TYPE_IP_PKTINFO
-        {
-            if let Some(ip_pktinfo) = cmsg_hdr.as_pktinfo_v4() {
-                println!("control message: pktinfo: {:?}", ip_pktinfo);
-                pktinfo_found = true;
-            }
+    for buf in slices {
+        let to_take = remaining.min(buf.len());
+        collected.extend_from_slice(&buf[..to_take]);
+        remaining -= to_take;
+        if remaining == 0 {
+            break;
         }
     }
-    assert!(pktinfo_found);
+
+    collected
 }
 
 #[test]
@@ -952,6 +998,13 @@ fn udp_pair_unconnected() -> (Socket, Socket) {
     let socket_b = Socket::new(Domain::IPV6, Type::DGRAM, None).unwrap();
 
     // Set the socket option before bind.
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     socket_b.set_recv_pktinfo_v6().unwrap();
 
     socket_a.bind(&unspecified_addr.into()).unwrap();
@@ -975,7 +1028,13 @@ fn udp_pair_unconnected() -> (Socket, Socket) {
 }
 
 /// Create a pair of non-connected UDP sockets suitable for unit tests.
-#[cfg(not(any(target_os = "redox", target_os = "vita")))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 fn udp_pair_unconnected_v4() -> (Socket, Socket) {
     // Use ephemeral ports assigned by the OS.
     let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);

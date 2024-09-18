@@ -6,20 +6,33 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
-//! to provide some features with safe APIs currently missing from `socket2`. As the result, this
-//! library can be used as a drop-in replacement of `socket2`.
-//!
-//! The following are the additional features or APIs:
-//!
-//! - [`socket::Socket::recv_from_initialized`]
-//!
-//! - [`socket::Socket::recvmsg_initialized`]
-//!
-//! - [`socket::Socket::set_pktinfo_v4`]
-//!
-//! - [`socket::Socket::set_recv_pktinfo_v6`]
-//!
+#![cfg_attr(
+    not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )),
+    doc = r#"
+This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
+to provide some features with safe APIs currently missing from `socket2`. As the result, this
+library can be used as a drop-in replacement of `socket2`.
+
+The following are the additional features or APIs:
+
+- [`socket::Socket::recv_from_initialized`]
+
+- [`socket::Socket::recvmsg_initialized`]
+
+- [`socket::Socket::set_pktinfo_v4`]
+
+- [`socket::Socket::set_recv_pktinfo_v6`]
+
+- [`CMsgHdr`] : support Control Messages.
+
+"#
+)]
 //! ----------------------------------------
 //! Utilities for creating and using sockets.
 //!
@@ -73,8 +86,17 @@
 // Disallow warnings in examples.
 #![doc(test(attr(deny(warnings))))]
 
+use std::fmt;
 #[cfg(not(target_os = "redox"))]
-use std::io::{IoSlice, IoSliceMut};
+use std::io::IoSlice;
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use std::io::IoSliceMut;
 #[cfg(not(target_os = "redox"))]
 use std::marker::PhantomData;
 #[cfg(not(target_os = "redox"))]
@@ -82,8 +104,15 @@ use std::mem;
 use std::mem::MaybeUninit;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::ops::{Deref, DerefMut};
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+use std::ptr;
 use std::time::Duration;
-use std::{fmt, ptr};
 
 /// Macro to implement `fmt::Debug` for a type, printing the constant names
 /// rather than a number.
@@ -607,6 +636,12 @@ impl TcpKeepalive {
     }
 }
 
+impl Default for TcpKeepalive {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Configuration of a `sendmsg(2)` system call.
 ///
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows. Also see [`MsgHdrMut`]
@@ -756,19 +791,35 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 ///
 /// This wraps `msghdr` on Unix and `WSAMSG` on Windows and supports
 /// fully initialized buffers.
-#[cfg(not(target_os = "redox"))]
-pub struct MsgHdrInit {
+///
+/// For the control messages, please use [MsgHdrInit::cmsg_hdr_vec] to retrieve.
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     inner: sys::msghdr,
+    _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>], &'control [u8])>,
 }
 
-#[cfg(not(target_os = "redox"))]
-impl MsgHdrInit {
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
     /// Create a new `MsgHdrInit` with all empty/zero fields.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> MsgHdrInit {
+    pub fn new() -> MsgHdrInit<'addr, 'bufs, 'control> {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
         MsgHdrInit {
             inner: unsafe { mem::zeroed() },
+            _lifetimes: PhantomData,
         }
     }
 
@@ -777,7 +828,7 @@ impl MsgHdrInit {
     /// Corresponds to setting `msg_name` and `msg_namelen` on Unix and `name`
     /// and `namelen` on Windows.
     #[allow(clippy::needless_pass_by_ref_mut)]
-    pub fn with_addr(mut self, addr: &mut SockAddr) -> Self {
+    pub fn with_addr(mut self, addr: &'addr mut SockAddr) -> Self {
         sys::set_msghdr_name(&mut self.inner, addr);
         self
     }
@@ -786,13 +837,7 @@ impl MsgHdrInit {
     ///
     /// Corresponds to setting `msg_iov` and `msg_iovlen` on Unix and `lpBuffers`
     /// and `dwBufferCount` on Windows.
-    ///
-    /// For example: using only a single buffer of 1k bytes:
-    /// ```ignore
-    ///     let mut buffer = vec![0; 1024];
-    ///     let mut buf_list = [IoSliceMut::new(&mut buffer)];
-    /// ```
-    pub fn with_buffers(mut self, buf_list: &mut [IoSliceMut<'_>]) -> Self {
+    pub fn with_buffers(mut self, buf_list: &'bufs mut [IoSliceMut<'_>]) -> Self {
         sys::set_msghdr_iov(
             &mut self.inner,
             buf_list.as_mut_ptr().cast(),
@@ -805,7 +850,7 @@ impl MsgHdrInit {
     ///
     /// Corresponds to setting `msg_control` and `msg_controllen` on Unix and
     /// `Control` on Windows.
-    pub fn with_control(mut self, buf: &mut [u8]) -> Self {
+    pub fn with_control(mut self, buf: &'control mut [u8]) -> Self {
         sys::set_msghdr_control(&mut self.inner, buf.as_mut_ptr().cast(), buf.len());
         self
     }
@@ -832,14 +877,27 @@ impl MsgHdrInit {
     }
 }
 
-#[cfg(not(target_os = "redox"))]
-impl fmt::Debug for MsgHdrInit {
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+impl fmt::Debug for MsgHdrInit<'_, '_, '_> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         "MsgHdrInit".fmt(fmt)
     }
 }
 
 /// Common operations supported on `msghdr`
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) trait MsgHdrOps {
     fn cmsg_first_hdr(&self) -> *mut sys::cmsghdr;
 
@@ -847,11 +905,24 @@ pub(crate) trait MsgHdrOps {
 }
 
 /// Reference of a control message header in the control buffer in `MsgHdrInit`
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub struct CMsgHdr<'a> {
     inner: &'a sys::cmsghdr,
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl CMsgHdr<'_> {
     /// Get the cmsg level
     pub fn get_level(&self) -> CMsgLevel {
@@ -914,6 +985,13 @@ impl CMsgHdr<'_> {
     }
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub(crate) trait CMsgHdrOps {
     /// Returns a pointer to the data portion of a cmsghdr.
     fn cmsg_data(&self) -> *mut u8;
@@ -921,11 +999,24 @@ pub(crate) trait CMsgHdrOps {
 
 /// Given a payload of `data_len`, returns the number of bytes a control message occupies.
 /// i.e. it includes the header, the data and the alignments.
-pub fn cmsg_space(data_len: usize) -> usize {
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
+pub const fn cmsg_space(data_len: usize) -> usize {
     sys::_cmsg_space(data_len)
 }
 
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl fmt::Debug for CMsgHdr<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -936,7 +1027,21 @@ impl fmt::Debug for CMsgHdr<'_> {
     }
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 const IN_PKTINFO_SIZE: usize = mem::size_of::<sys::InPktInfo>();
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 const IN6_PKTINFO_SIZE: usize = mem::size_of::<sys::In6PktInfo>();
 
 /// Represents IN_PKTINFO structure.
@@ -951,6 +1056,13 @@ pub struct PktInfoV4 {
 
 impl PktInfoV4 {
     /// The size in bytes for IPv4 pktinfo
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub const fn size() -> usize {
         IN_PKTINFO_SIZE
     }
@@ -968,6 +1080,13 @@ pub struct PktInfoV6 {
 
 impl PktInfoV6 {
     /// The size in bytes for IPv6 pktinfo
+    #[cfg(not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )))]
     pub const fn size() -> usize {
         IN6_PKTINFO_SIZE
     }
@@ -977,20 +1096,44 @@ impl PktInfoV6 {
 pub type CMsgLevel = i32;
 
 /// constant for cmsg_level of IPPROTO_IP
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_LEVEL_IPPROTO_IP: CMsgLevel = sys::IPPROTO_IP;
 
 /// constant for cmsg_level of IPPROTO_IPV6
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_LEVEL_IPPROTO_IPV6: CMsgLevel = sys::IPPROTO_IPV6;
 
 /// Represents available types of control messages.
 pub type CMsgType = i32;
 
 /// constant for cmsghdr type
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_TYPE_IP_PKTINFO: CMsgType = sys::IP_PKTINFO;
 
 /// constant for cmsghdr type in IPv6
-#[cfg(not(target_os = "redox"))]
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 pub const CMSG_TYPE_IPV6_PKTINFO: CMsgType = sys::IPV6_PKTINFO;
