@@ -874,6 +874,13 @@ pub struct CMsgHdr<'a> {
     inner: &'a sys::cmsghdr,
 }
 
+#[cfg(not(any(
+    target_os = "freebsd",
+    target_os = "fuchsia",
+    target_os = "hurd",
+    target_os = "redox",
+    target_os = "vita",
+)))]
 impl CMsgHdr<'_> {
     /// Get the cmsg level
     pub fn get_level(&self) -> CMsgLevel {
