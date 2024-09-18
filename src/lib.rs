@@ -6,13 +6,15 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![cfg_attr(not(any(
-    target_os = "freebsd",
-    target_os = "fuchsia",
-    target_os = "hurd",
-    target_os = "redox",
-    target_os = "vita",
-)), doc = r#"
+#![cfg_attr(
+    not(any(
+        target_os = "freebsd",
+        target_os = "fuchsia",
+        target_os = "hurd",
+        target_os = "redox",
+        target_os = "vita",
+    )),
+    doc = r#"
 This library is a superset of [`socket2`](https://crates.io/crates/socket2) crate and it aims
 to provide some features with safe APIs currently missing from `socket2`. As the result, this
 library can be used as a drop-in replacement of `socket2`.
@@ -29,7 +31,8 @@ The following are the additional features or APIs:
 
 - [`CMsgHdr`] : support Control Messages.
 
-"#)]
+"#
+)]
 //! ----------------------------------------
 //! Utilities for creating and using sockets.
 //!
@@ -630,6 +633,12 @@ impl TcpKeepalive {
             retries: Some(retries),
             ..self
         }
+    }
+}
+
+impl Default for TcpKeepalive {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
