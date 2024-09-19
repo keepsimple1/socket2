@@ -888,6 +888,11 @@ fn sent_to_recvmsg_init_v4() {
     assert!(!ip_pktinfo.is_empty());
     println!("IP PKTINFO: {:?}", ip_pktinfo);
 
+    // Verify source address from msghdr.
+    if let Some(src) = msg.get_addr() {
+        println!("source addr in msg is: {:?}", src);
+    }
+
     // Verify the data received.
     assert_eq!(received, data.len());
     let all_data = collect_io_slices(&bufs, received);
