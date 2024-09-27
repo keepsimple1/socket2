@@ -143,10 +143,11 @@ impl SockAddr {
         })
     }
 
-    /// Create an empty `SockAddr` with address storage initialzed with zeros, and
-    /// `len` set to the full length of the address storage.
+    /// Create an empty `SockAddr` with the address storage initialzed with zeros, and
+    /// its `len` set to the full length of the address storage.
     ///
-    /// This is a convenient method to create a valid `SockAddr` to be filled in.
+    /// This is a convenient method to create a valid `SockAddr` to be filled in as any
+    /// kind of socket addresses (e.g. IPv4 or IPv6).
     pub fn empty() -> SockAddr {
         // SAFETY: a `sockaddr_storage` of all zeros is valid.
         let storage = unsafe { mem::zeroed::<sockaddr_storage>() };

@@ -889,7 +889,7 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
 
     /// Returns the optional source address in the msg.
     ///
-    /// This refers to the same address passed in [`Self::with_addr`]
+    /// This is a convenient method to access the address passed in [`Self::with_addr`]
     pub fn get_addr(&self) -> Option<&SockAddr> {
         self.src.as_deref()
     }
