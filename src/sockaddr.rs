@@ -184,11 +184,6 @@ impl SockAddr {
         Domain(self.storage.ss_family as c_int)
     }
 
-    /// Returns the length in socket storage.
-    pub const fn ss_len(&self) -> socklen_t {
-        self.storage.ss_len as socklen_t
-    }
-
     /// Returns the size of this address in bytes.
     pub const fn len(&self) -> socklen_t {
         self.len
