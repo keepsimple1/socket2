@@ -1161,6 +1161,7 @@ pub(crate) fn recvmsg_init(
 ) -> io::Result<usize> {
     syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|length| {
         if let Some(src) = msg.src.as_mut() {
+            // SAFETY: `msg.inner.msg_namelen` has been update properly in the success case.
             unsafe { src.set_length(msg.inner.msg_namelen) }
         }
         length as usize

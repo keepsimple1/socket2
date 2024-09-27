@@ -720,6 +720,7 @@ impl Socket {
         }
 
         if let Some(src) = msg.src.as_mut() {
+            // SAFETY: `msg.inner.namelen` has been update properly in the success case.
             unsafe {
                 src.set_length(msg.inner.namelen as sys::socklen_t);
             }
