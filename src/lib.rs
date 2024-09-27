@@ -809,8 +809,6 @@ pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     /// not the `len`. Any syscall that operates on `MsgHdrInit` does not update
     /// `addr.len` in the struct passed in via `with_addr`. Hence we store a reference
     /// here to access both the storage and the len.
-    ///
-    /// This problem will be gone if `SockAddr` struct removes its `len` field.
     src: Option<&'addr mut SockAddr>,
 
     _lifetimes: PhantomData<(&'bufs [IoSliceMut<'bufs>], &'control [u8])>,

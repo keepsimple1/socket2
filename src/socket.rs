@@ -719,6 +719,12 @@ impl Socket {
             return Err(io::Error::last_os_error());
         }
 
+        if let Some(src) = msg.src.as_mut() {
+            unsafe {
+                src.set_length(msg.inner.namelen as sys::socklen_t);
+            }
+        }
+
         Ok(read_bytes as usize)
     }
 
