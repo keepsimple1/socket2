@@ -803,7 +803,7 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     inner: sys::msghdr,
 
-    /// This is a walkaround for a subtle problem:
+    /// This is a workaround for a subtle problem:
     ///
     /// `sys::msghdr` does not store the full `SockAddr`, namely only `sockaddr_storage`,
     /// not the `len`. Any syscall that operates on `MsgHdrInit` does not update
@@ -889,7 +889,9 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
         cmsg_vec
     }
 
-    /// Returns the optional source address in this struct.
+    /// Returns the optional source address in the msg.
+    ///
+    /// This refers to the same address passed in [`Self::with_addr`]
     pub fn get_addr(&self) -> Option<&SockAddr> {
         self.src.as_deref()
     }

@@ -1159,7 +1159,12 @@ pub(crate) fn recvmsg_init(
     msg: &mut MsgHdrInit<'_, '_, '_>,
     flags: c_int,
 ) -> io::Result<usize> {
-    syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|n| n as usize)
+    syscall!(recvmsg(fd, &mut msg.inner, flags)).map(|length| {
+        if let Some(src) = msg.src.as_mut() {
+            unsafe { src.set_length(src.ss_len()) }
+        }
+        length as usize
+    })
 }
 
 #[cfg(not(any(

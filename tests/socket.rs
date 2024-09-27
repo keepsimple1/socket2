@@ -823,6 +823,10 @@ fn sent_to_recvmsg_init_v6() {
     assert!(!cmsg_vec.is_empty());
     println!("cmsg vec: {:?}", cmsg_vec);
 
+    let src_addr = msg.get_addr().unwrap();
+    println!("source addr: {:?}", src_addr);
+    assert_eq!(*src_addr, addr_a);
+
     let mut pktinfo_found = false;
     for cmsg_hdr in cmsg_vec {
         if cmsg_hdr.get_level() == CMSG_LEVEL_IPPROTO_IPV6
@@ -860,17 +864,11 @@ fn sent_to_recvmsg_init_v4() {
 
     assert_eq!(sent, data.len());
 
-    let ipv4addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0);
-    let ipv6addr = SocketAddrV6::new(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), 8080, 0, 0);
-    let mut sockaddr = if addr_b.is_ipv4() {
-        SockAddr::from(ipv4addr)
-    } else {
-        SockAddr::from(ipv6addr)
-    };
-
+    let mut sockaddr = SockAddr::empty();
     let mut buffer = vec![0; data.len() * 2]; // provide a bigger buffer than the expected data
     let mut bufs = [IoSliceMut::new(&mut buffer)];
     let mut msg_control = vec![0; cmsg_space(PktInfoV4::size())];
+    println!("msg control size: {}", msg_control.len());
     let mut msg = MsgHdrInit::new()
         .with_addr(&mut sockaddr)
         .with_buffers(&mut bufs)
@@ -891,6 +889,7 @@ fn sent_to_recvmsg_init_v4() {
     // Verify source address from msghdr.
     if let Some(src) = msg.get_addr() {
         println!("source addr in msg is: {:?}", src);
+        assert_eq!(*src, addr_a);
     }
 
     // Verify the data received.
