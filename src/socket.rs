@@ -684,50 +684,23 @@ impl Socket {
         target_os = "hurd",
         target_os = "redox",
         target_os = "vita",
-        target_os = "windows",
     )))]
     pub fn recvmsg_initialized(
         &self,
         msg: &mut MsgHdrInit<'_, '_, '_>,
         flags: sys::c_int,
     ) -> io::Result<usize> {
+        #[cfg(windows)]
+        {
+            let wsarecvmsg = self.wsarecvmsg.ok_or(io::Error::new(
+                io::ErrorKind::NotFound,
+                "missing WSARECVMSG function",
+            ))?;
+            sys::recvmsg_init(wsarecvmsg, self.as_raw(), msg, flags)
+        }
+
+        #[cfg(not(windows))]
         sys::recvmsg_init(self.as_raw(), msg, flags)
-    }
-
-    /// Receive a message from a socket using a message structure that is fully initialized.
-    #[cfg(windows)]
-    pub fn recvmsg_initialized(
-        &self,
-        msg: &mut MsgHdrInit<'_, '_, '_>,
-        _flags: sys::c_int,
-    ) -> io::Result<usize> {
-        let wsarecvmsg = self.wsarecvmsg.ok_or(io::Error::new(
-            io::ErrorKind::NotFound,
-            "missing WSARECVMSG function",
-        ))?;
-        let mut read_bytes = 0;
-        let error_code = unsafe {
-            (wsarecvmsg)(
-                self.as_raw() as _,
-                &mut msg.inner,
-                &mut read_bytes,
-                std::ptr::null_mut(),
-                None,
-            )
-        };
-
-        if error_code != 0 {
-            return Err(io::Error::last_os_error());
-        }
-
-        if let Some(src) = msg.src.as_mut() {
-            // SAFETY: `msg.inner.namelen` has been update properly in the success case.
-            unsafe {
-                src.set_length(msg.inner.namelen as sys::socklen_t);
-            }
-        }
-
-        Ok(read_bytes as usize)
     }
 
     /// Sends data on the socket to a connected peer.

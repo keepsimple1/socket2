@@ -786,6 +786,38 @@ pub(crate) fn locate_wsarecvmsg(socket: Socket) -> io::Result<WSARecvMsgExtensio
     }
 }
 
+/// `recvmsg` with fully initialized buffers.
+pub(crate) fn recvmsg_init(
+    wsarecvmsg: WSARecvMsgExtension,
+    fd: Socket,
+    msg: &mut MsgHdrInit<'_, '_, '_>,
+    flags: c_int,
+) -> io::Result<usize> {
+    let mut read_bytes = 0;
+    let error_code = unsafe {
+        (wsarecvmsg)(
+            self.as_raw() as _,
+            &mut msg.inner,
+            &mut read_bytes,
+            std::ptr::null_mut(),
+            None,
+        )
+    };
+
+    if error_code != 0 {
+        return Err(io::Error::last_os_error());
+    }
+
+    if let Some(src) = msg.src.as_mut() {
+        // SAFETY: `msg.inner.namelen` has been update properly in the success case.
+        unsafe {
+            src.set_length(msg.inner.namelen as sys::socklen_t);
+        }
+    }
+
+    Ok(read_bytes as usize)
+}
+
 /// Wrapper around `getsockopt` to deal with platform specific timeouts.
 pub(crate) fn timeout_opt(fd: Socket, lvl: c_int, name: i32) -> io::Result<Option<Duration>> {
     unsafe { getsockopt(fd, lvl, name).map(from_ms) }
