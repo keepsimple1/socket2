@@ -802,7 +802,16 @@ impl<'name, 'bufs, 'control> fmt::Debug for MsgHdrMut<'name, 'bufs, 'control> {
 )))]
 pub struct MsgHdrInit<'addr, 'bufs, 'control> {
     inner: sys::msghdr,
-    _lifetimes: PhantomData<(&'addr SockAddr, &'bufs [IoSliceMut<'bufs>], &'control [u8])>,
+
+    /// This is a workaround for a subtle problem:
+    ///
+    /// `sys::msghdr` does not store the full `SockAddr`, namely only `sockaddr_storage`,
+    /// not the `len`. Any syscall that operates on `MsgHdrInit` does not update
+    /// `addr.len` in the struct passed in via `with_addr`. Hence we store a reference
+    /// here to access both the storage and the len.
+    src: Option<&'addr mut SockAddr>,
+
+    _lifetimes: PhantomData<(&'bufs [IoSliceMut<'bufs>], &'control [u8])>,
 }
 
 #[cfg(not(any(
@@ -819,6 +828,7 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
         // SAFETY: all zero is valid for `msghdr` and `WSAMSG`.
         MsgHdrInit {
             inner: unsafe { mem::zeroed() },
+            src: None,
             _lifetimes: PhantomData,
         }
     }
@@ -830,6 +840,7 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
     #[allow(clippy::needless_pass_by_ref_mut)]
     pub fn with_addr(mut self, addr: &'addr mut SockAddr) -> Self {
         sys::set_msghdr_name(&mut self.inner, addr);
+        self.src = Some(addr);
         self
     }
 
@@ -874,6 +885,13 @@ impl<'addr, 'bufs, 'control> MsgHdrInit<'addr, 'bufs, 'control> {
         }
 
         cmsg_vec
+    }
+
+    /// Returns the optional source address in the msg.
+    ///
+    /// This is a convenient method to access the address passed in [`Self::with_addr`]
+    pub fn get_addr(&self) -> Option<&SockAddr> {
+        self.src.as_deref()
     }
 }
 

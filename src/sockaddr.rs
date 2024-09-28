@@ -143,6 +143,18 @@ impl SockAddr {
         })
     }
 
+    /// Create an empty `SockAddr` with the address storage initialzed with zeros, and
+    /// its `len` set to the full length of the address storage.
+    ///
+    /// This is a convenient method to create a valid `SockAddr` to be filled in as any
+    /// kind of socket addresses (e.g. IPv4 or IPv6).
+    pub fn empty() -> SockAddr {
+        // SAFETY: a `sockaddr_storage` of all zeros is valid.
+        let storage = unsafe { mem::zeroed::<sockaddr_storage>() };
+        let len = size_of::<sockaddr_storage>() as socklen_t;
+        SockAddr { storage, len }
+    }
+
     /// Constructs a `SockAddr` with the family `AF_UNIX` and the provided path.
     ///
     /// Returns an error if the path is longer than `SUN_LEN`.
