@@ -1,30 +1,27 @@
 # socket2-plus
 
-This is a superset of [`socket2`](https://crates.io/crates/socket2) and it aims to provide some additional APIs currently missing from `socket2`. 
-This library can be used as a dropped-in replacement for `socket2`.
+This library is a superset of [`socket2`](https://crates.io/crates/socket2) and it aims to provide some additional APIs currently missing from `socket2`. This library can be used as a drop-in replacement for `socket2`.
 
-The following APIs are added in the first version:
+The following APIs are added:
 
-- `recv_from_initialized` to support `recv_from` with a regular initialized buffer.
-- `recvmsg_initialized` to support `recvmsg` with `MsgHdrInit` that has initialized buffers.
-- Also support Windows for `recvmsg_initialized`.
+- `recv_from_initialized` to support `recv_from` with a fully initialized buffer.
+- `recvmsg_initialized` to support `recvmsg` and `MsgHdrInit` with initialized buffers.
+- Support Windows for `recvmsg_initialized`.
 - `set_pktinfo_v4` and `set_recv_pktinfo_v6` to support IP_PKTINFO and IPV6_PKTINFO socket options.
 
 See [documentation](https://docs.rs/socket2-plus) for more details.
 
-## Examples
+## Target platforms
 
-Please see test cases for examples of using the new APIs:
-- Test [`send_to_recv_from_init`](tests/socket.rs#756)
-- Test [`sent_to_recvmsg_init_v4`](tests/socket.rs#824)
+All new APIs are built and tested on `macOS`, `Linux` and `Windows`. For other platforms, the new APIs are only partially or not available.
 
-## Base 
+## Forked from socket2
 
 This version is forked from `socket2` v0.5.7. We plan to rebase to the latest `socket2` stable release regularly.
 
 ## Minimum Supported Rust Version (MSRV)
 
-Socket2 uses 1.63.0 as MSRV.
+`socket2-plus` uses 1.63.0 as MSRV.
 
 ## License
 

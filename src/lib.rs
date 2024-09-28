@@ -29,10 +29,11 @@ The following are the additional features or APIs:
 
 - [`socket::Socket::set_recv_pktinfo_v6`]
 
-- [`CMsgHdr`] : support Control Messages.
+- [`CMsgHdr`]: support Control Messages used in `recvmsg_initialized`.
 
 "#
 )]
+
 //! ----------------------------------------
 //! Utilities for creating and using sockets.
 //!
