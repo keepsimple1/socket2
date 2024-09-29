@@ -14,7 +14,7 @@ The following APIs are added:
 
 See [documentation](https://docs.rs/socket2-plus) for more details.
 
-See test cases [`send_to_recv_from_init`](tests/socket.rs#770) and [`sent_to_recvmsg_init_v4`](tests/socket.rs#856).
+See test cases [`send_to_recv_from_init`](tests/socket.rs#L770) and [`sent_to_recvmsg_init_v4`](tests/socket.rs#L856).
 
 ## Target platforms
 
