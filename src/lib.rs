@@ -29,6 +29,8 @@ The following are the additional features or APIs:
 
 - [`socket::Socket::set_recv_pktinfo_v6`]
 
+- [`MsgHdrInit`]: support `recvmsg` message header operations.
+
 - [`CMsgHdr`]: support Control Messages used in `recvmsg_initialized`.
 
 "#

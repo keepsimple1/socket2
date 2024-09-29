@@ -1,3 +1,14 @@
+# socket2-plus 0.2.1
+
+## Highlights
+
+- `SockAddr` passed in `MsgHdrInit::with_addr()` will have its `len` updated properly during `recvmsg_initialized` call. Users can call `SockAddr::empty()` to create a valid `SockAddr` to be filled in. 
+
+## All changes
+
+* `2aa5cd5` bump up version to 0.2.1 (#11) (keepsimple1)
+* `a9d2d3a` recvmsg_initialized: keep addr.len correct with MsgHdrInit (#10) (keepsimple1)
+
 # socket2-plus 0.2.0
 
 Breaking changes:
