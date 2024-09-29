@@ -679,6 +679,45 @@ impl Socket {
     }
 
     /// Receive a message from a socket using a message structure that is fully initialized.
+    ///
+    /// One typical use case is when the caller wants to know the destination address of the received
+    /// packet on a socket bound to unspecified address. For example:
+    ///
+    /// ```no_run
+    /// use std::net::{Ipv4Addr, SocketAddrV4};
+    /// use std::io::IoSliceMut;
+    /// use socket2_plus::{
+    ///     cmsg_space, MsgHdrInit, PktInfoV4, Domain, Socket, Type, SockAddr,
+    /// };
+    ///
+    /// let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
+    /// let socket = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
+    ///
+    /// // Set the socket option before bind.
+    /// socket.set_pktinfo_v4().unwrap();
+    /// socket.bind(&unspecified_addr.into()).unwrap();
+    ///
+    /// // Set up MsgHdrInit
+    /// let mut sockaddr = SockAddr::empty();
+    /// let mut buffer = vec![0; 1024]; // provide a big enough buffer
+    /// let mut bufs = [IoSliceMut::new(&mut buffer)];
+    /// let mut msg_control = vec![0; cmsg_space(PktInfoV4::size())];
+    /// let mut msg_hdr = MsgHdrInit::new()
+    ///     .with_addr(&mut sockaddr)
+    ///     .with_buffers(&mut bufs)
+    ///     .with_control(&mut msg_control);
+    ///
+    /// // Receive a mesage.
+    /// let _received_size = socket.recvmsg_initialized(&mut msg_hdr, 0).unwrap();
+    ///
+    /// // Retrieve PKTINFO from the control message, which will have destination addr.
+    /// let _ip_pktinfo: Vec<_> = msg_hdr
+    ///     .cmsg_hdr_vec()
+    ///     .iter()
+    ///     .filter_map(|cmsg| cmsg.as_pktinfo_v4())
+    ///     .collect();
+    /// ```
+    ///
     #[cfg(not(any(
         target_os = "freebsd",
         target_os = "fuchsia",
