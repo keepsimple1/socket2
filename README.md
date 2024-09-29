@@ -26,7 +26,7 @@ This version is forked from `socket2` v0.5.7. We plan to rebase to the latest `s
 
 ## Minimum Supported Rust Version (MSRV)
 
-`socket2-plus` uses 1.63.0 as MSRV.
+`socket2-plus` uses 1.63.0 as MSRV. (same as `socket2`)
 
 ## License
 
