@@ -195,7 +195,7 @@ impl<'a> MaybeUninitSlice<'a> {
 // Used in `MsgHdr`.
 pub(crate) use windows_sys::Win32::Networking::WinSock::WSAMSG as msghdr;
 
-use crate::CMsgHdrOps;
+use crate::{CMsgHdrOps, MsgHdrInit};
 
 impl CMsgHdrOps for cmsghdr {
     fn cmsg_data(&self) -> *mut u8 {
@@ -784,6 +784,38 @@ pub(crate) fn locate_wsarecvmsg(socket: Socket) -> io::Result<WSARecvMsgExtensio
         )),
         Some(extension) => Ok(extension),
     }
+}
+
+/// `recvmsg` with fully initialized buffers.
+pub(crate) fn recvmsg_init(
+    wsarecvmsg: WSARecvMsgExtension,
+    fd: Socket,
+    msg: &mut MsgHdrInit<'_, '_, '_>,
+    _flags: c_int,
+) -> io::Result<usize> {
+    let mut read_bytes = 0;
+    let error_code = unsafe {
+        (wsarecvmsg)(
+            fd as _,
+            &mut msg.inner,
+            &mut read_bytes,
+            std::ptr::null_mut(),
+            None,
+        )
+    };
+
+    if error_code != 0 {
+        return Err(io::Error::last_os_error());
+    }
+
+    if let Some(src) = msg.src.as_mut() {
+        // SAFETY: `msg.inner.namelen` has been update properly in the success case.
+        unsafe {
+            src.set_length(msg.inner.namelen as socklen_t);
+        }
+    }
+
+    Ok(read_bytes as usize)
 }
 
 /// Wrapper around `getsockopt` to deal with platform specific timeouts.
