@@ -11,6 +11,8 @@ The following APIs are added:
 
 See [documentation](https://docs.rs/socket2-plus) for more details.
 
+See test cases [`send_to_recv_from_init`](tests/socket.rs#770) and [`sent_to_recvmsg_init_v4`](tests/socket.rs#856).
+
 ## Target platforms
 
 All new APIs are built and tested on `macOS`, `Linux` and `Windows`. For other platforms, the new APIs are only partially or not available.
