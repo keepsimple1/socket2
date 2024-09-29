@@ -690,11 +690,14 @@ impl Socket {
     ///     cmsg_space, MsgHdrInit, PktInfoV4, Domain, Socket, Type, SockAddr,
     /// };
     ///
+    /// // Create a socket.
     /// let unspecified_addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0);
     /// let socket = Socket::new(Domain::IPV4, Type::DGRAM, None).unwrap();
     ///
     /// // Set the socket option before bind.
     /// socket.set_pktinfo_v4().unwrap();
+    ///
+    /// // Bind the socket.
     /// socket.bind(&unspecified_addr.into()).unwrap();
     ///
     /// // Set up MsgHdrInit

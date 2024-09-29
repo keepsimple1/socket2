@@ -34,7 +34,8 @@ The following are the additional features or APIs:
 "#
 )]
 
-//! ----------------------------------------
+//! ## The following summary is inherited from `socket2`.
+//!
 //! Utilities for creating and using sockets.
 //!
 //! The goal of this crate is to create and use a socket using advanced
