@@ -1,5 +1,8 @@
 # socket2-plus
 
+[![Build](https://github.com/keepsimple1/socket2-plus/actions/workflows/build.yml/badge.svg)](https://github.com/keepsimple1/socket2-plus/actions)
+[![Cargo](https://img.shields.io/crates/v/socket2-plus.svg)](https://crates.io/crates/socket2-plus)
+
 This library is a superset of [`socket2`](https://crates.io/crates/socket2) and it aims to provide some additional APIs currently missing from `socket2`. This library can be used as a drop-in replacement for `socket2`.
 
 The following APIs are added:
